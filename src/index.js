@@ -1,11 +1,11 @@
 import React, { Component, Fragment } from "react";
 import { fetchGraphData } from "./utils";
 import ReactDOM from "react-dom";
-import "./style.css";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
+import "./style.css";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
