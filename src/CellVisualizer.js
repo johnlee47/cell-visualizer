@@ -68,8 +68,9 @@ export default class CellVisualizer extends Component {
     this.cell = {};
   }
 
-  componentDidUpdate() {
-    if (this.props.data) {
+  componentDidUpdate(prevProp) {
+    if (prevProp.data == this.props.data) {
+    } else if (this.props.data) {
       this.initGraph();
     }
   }
@@ -189,6 +190,12 @@ export default class CellVisualizer extends Component {
         const mapping = this.props.groupMapping.find(m => m.group === d.group);
         return mapping ? mapping.color : "#333";
       })
+      .on(
+        "click",
+        function(d) {
+          this.props.onNodeSelected(d);
+        }.bind(this)
+      )
       .call(this.drag(this.simulation));
 
     this.simulation.on("tick", this.onTick.bind(this));
