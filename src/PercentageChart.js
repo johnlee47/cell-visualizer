@@ -11,7 +11,8 @@ export class PercentageChart extends Component {
 
   componentDidMount() {
     this.svg = d3.select("svg#chart");
-    this.calculateCoordinates(this.props.data);
+    const arr = [...this.props.data]
+    this.calculateCoordinates(arr);
     this.drawChart();
   }
 
@@ -38,6 +39,8 @@ export class PercentageChart extends Component {
       .attr("width", this.width)
       .attr("height", this.height)
       .append("g");
+
+      d3.select(".tooltip").remove();
 
     // Define the div for the tooltip
     var div = d3
