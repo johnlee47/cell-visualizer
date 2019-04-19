@@ -4,9 +4,9 @@ import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
 import { Button, Input } from "antd";
+import { AutoComplete } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
-import OrganelleDescription from "./OrganelleDescription";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -23,6 +23,10 @@ const GroupMapping = [
   { group: 10, color: "#c8ee2a", component: "cytoplasm" }
 ];
 
+
+// const dataSource = ['john','nati','milky']; 
+
+
 export class App extends Component {
   constructor(props) {
     super(props);
@@ -30,16 +34,11 @@ export class App extends Component {
       data: undefined,
       selectedNode: undefined
     };
-
-    this.handleNodeSelected = this.handleNodeSelected.bind(this);
   }
 
+ 
   componentDidMount() {
-    fetchGraphData().then(data => this.setState({ data: data }));
-  }
-
-  handleNodeSelected(node) {
-    this.setState({ selectedNode: node });
+    fetchGraphData().then(data => this.setState({ data:data}));
   }
 
   renderVisualization() {
@@ -62,32 +61,74 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-        <Input.Search
-          placeholder="input search text"
-          onSearch={value => console.log(value)}
-          style={{ position: "absolute", top: 15, width: 600 }}
-        />
-        <CellVisualizer groupMapping={GroupMapping} data={this.state.data} onNodeSelected={this.handleNodeSelected} />
 
-        {this.state.selectedNode && (
-          <OrganelleDescription
-            selectedNode={this.state.selectedNode}
-            onNodeSelected={this.handleNodeSelected}
-          />
-        )}        
+        
+  
+        
+
+        <CellVisualizer groupMapping={GroupMapping} data={this.state.data} />
+
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            height: "100vh",
+            right: 0,
+            top: 0,
+            paddingTop: 15,
+            paddingRight: 15,
+            flexDirection: "column",
+            width: 350
+          }}
+        >
+          <h3>TAB1</h3>
+          <p>
+            activation of MAPK activity;activation of MAPKKK activity;Fc-epsilon
+            receptor signaling pathway;heart morphogenesis;I-kappaB
+            kinase/NF-kappaB cascade;in utero embryonic development;innate
+            immune response;JNK cascade;lung development;MyD88-dependent
+            toll-like receptor signaling pathway;MyD88-independent toll-like
+            receptor signaling pathway;nucleotide-binding domain,
+          </p>
+          <p>
+            activity;stress-activated MAPK cascade;toll-like receptor 10
+            signaling pathway;toll-like receptor 2 signaling pathway;toll-like
+          </p>
+          <div style={{ textAlign: "right" }}>
+            <Button.Group>
+              <Button type="default">Close</Button>
+              <Button type="primary">Learn more</Button>
+            </Button.Group>
+          </div>
+        </div>
         <div style={{ position: "absolute", bottom: 0, width: 600 }}>
           <PercentageChart data={data} />
         </div>
       </div>
     );
   }
-
   render() {
+    {console.log(this.state.data)}
     return this.state.data ? (
-      <Fragment>{this.renderVisualization()}</Fragment>
+      <Fragment>
+      <AutoComplete
+        dataSource={this.state.data.nodes.map(d => d.id)}
+        style={{ top: 15,
+          left :600,
+          width: 600,
+          
+          display: "inline-block"}}
+        onSearch={value => console.log(value)}
+        onClick = {this.state.selectedNode}
+        placeholder="input search text here"
+        filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
+      >
+      </AutoComplete>
+      {this.renderVisualization()}
+      </Fragment>
     ) : (
-      <h1>No data to render</h1>
-    );
+        <h1>No data to render</h1>
+      );
   }
 }
 
