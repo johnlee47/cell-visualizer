@@ -6,6 +6,7 @@ import { PercentageChart } from "./PercentageChart";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
+import {AutoComplete} from "antd";
 import OrganelleDescription from "./OrganelleDescription";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
@@ -23,6 +24,8 @@ const GroupMapping = [
   { group: 10, color: "#c8ee2a", component: "cytoplasm" }
 ];
 
+
+
 export class App extends Component {
   constructor(props) {
     super(props);
@@ -32,8 +35,10 @@ export class App extends Component {
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
+    
   }
-
+  
+   
   componentDidMount() {
     fetchGraphData().then(data => this.setState({ data: data }));
   }
@@ -41,6 +46,7 @@ export class App extends Component {
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
+
 
   renderVisualization() {
     const data = GroupMapping.map(m => {
@@ -62,11 +68,7 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-        <Input.Search
-          placeholder="input search text"
-          onSearch={value => console.log(value)}
-          style={{ position: "absolute", top: 15, width: 600 }}
-        />
+        
         <CellVisualizer groupMapping={GroupMapping} data={this.state.data} onNodeSelected={this.handleNodeSelected} />
 
         {this.state.selectedNode && (
@@ -82,12 +84,28 @@ export class App extends Component {
     );
   }
 
+   
+
   render() {
     return this.state.data ? (
-      <Fragment>{this.renderVisualization()}</Fragment>
+      <Fragment>
+      <AutoComplete
+        dataSource={this.state.data.nodes.map(d => d.id)}
+        placeholder="input here"
+        className="custom"
+        style={{ top: 15,
+          left :600,
+          width: 600,
+          display: "inline-block"}}
+        onSelect={selectedId => {this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId))}}
+        filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
+      >
+      </AutoComplete>
+      {this.renderVisualization()}
+      </Fragment>
     ) : (
-      <h1>No data to render</h1>
-    );
+        <h1>No data to render</h1>
+      );
   }
 }
 
