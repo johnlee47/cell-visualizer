@@ -58,9 +58,6 @@ const constraintOutsideCell = (x, y, cell) => {
   };
 };
 
-function changeFill() { var mouse = d3.select(this).attr("fill", "black"); }
-//function changeFill() { selection.attr("fill", "black"); }
-//function changeOpacity() { selection.attr("opacity", "0.1"); }
 
 export default class CellVisualizer extends Component {
   constructor(props) {
@@ -209,7 +206,6 @@ export default class CellVisualizer extends Component {
       .on(
         "click",
         function (d) {
-          // var mouse = d3.select(t
           this.props.onNodeSelected(d);
         }.bind(this)
       )
