@@ -226,26 +226,48 @@ export default class CellVisualizer extends Component {
     // Update node positions
     this.node.each(function(d) {
       const result = calculateNewPosition(d);
+      let characterLength =
+        result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
       d3.select(this)
         .attr("cx", result.x)
         .attr("fixed", false)
         .attr("cy", result.y)
         .on("mouseover", function(d, i) {
-          d3.select(this.parentNode)
+          // Add the text background
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
+            .append("rect")
+            .style("fill", "hsla(204, 80%, 80%, 1)")
+            .attr("x", function() {
+              // Adjust the center of the rectangle
+              return result.x - characterLength / 2;
+            }) // set x position of left side of rectangle
+            .attr("rx", 5)
+            .attr("y", result.y - 40) // set y position of top of rectangle
+            .attr("ry", 5)
+            .attr("width", function() {
+              // The function returns width of the background based on the length of characters
+              return characterLength;
+            })
+            .attr("height", 30)
+            .attr("id", "node" + i);
+
+          //Add the text description
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
             .append("text")
-            .style("fill", "black") // fill the text with the colour black
+            .style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
             .style("font-size", "16px")
-            .attr("x", d.x) // set x position of left side of text
-            .attr("y", d.y) // set y position of bottom of text
+            .style("font-weight", "600")
+            .attr("x", result.x) // set x position of left side of text
+            .attr("y", result.y) // set y position of bottom of text
             .attr("dy", "-20") // set offset y position
             .attr("text-anchor", "middle") // set anchor y justification
             .attr("id", "node" + i)
             .text(function(d) {
-              return [d.x.toFixed(2), d.y.toFixed(2)];
+              return [result.x.toFixed(2), result.y.toFixed(2)];
             });
         })
         .on("mouseout", function(d, i) {
-          d3.select("#node" + i).remove();
+          d3.selectAll("#node" + i).remove(); // Removes the on-hover information
         });
     });
     // Update link
