@@ -52,6 +52,7 @@ const constraintOutsideCell = (x, y, cell) => {
     };
   }
   // Do not let the node out of the viewport
+  let w,h = 800;
   return {
     x: x < padding ? (xt = padding) : x > w - padding ? w - padding : x,
     y: y < padding ? (yt = padding) : y > h - padding ? h - padding : y
