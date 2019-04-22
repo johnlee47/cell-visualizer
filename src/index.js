@@ -7,8 +7,9 @@ import { Button, Input, Icon } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import {AutoComplete} from "antd";
+import {Download} from "antd";
 import OrganelleDescription from "./OrganelleDescription";
-import {Upload} from "antd";
+import saveSvgAsPng from "./saveSvgAsPng";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -34,6 +35,7 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
+      size: 'large'
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
@@ -89,20 +91,25 @@ export class App extends Component {
    
 
   render() {
+    const size = this.state.size;
     return this.state.data ? (
       <Fragment>
+        <div style={{right:15,bottom:15,position:'absolute'}}>
+      <Button id="download" type="primary" icon="download" size={'large'}>Download
+      </Button>
+      </div>
+      <div style= {{width:'100vw',textAlign:'center',position:'absolute',top:15}}>
       <AutoComplete
         dataSource={this.state.data.nodes.map(d => d.id)}
         placeholder="input here"
         className="custom"
-        style={{ top: 15,
-          left :600,
-          width: 600,
-          display: "inline-block"}}
+        style={{
+          width: 600}}
         onSelect={selectedId => {this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId))}}
         filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
       >
       </AutoComplete>
+      </div>
       {this.renderVisualization()}
       </Fragment>
     ) : (
