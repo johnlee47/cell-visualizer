@@ -71,6 +71,7 @@ export default class CellVisualizer extends Component {
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
+      this.resetGraph();
       this.initGraph();
     }
   }
@@ -136,6 +137,15 @@ export default class CellVisualizer extends Component {
       if (this.cell["cell_wall"]) {
         this.cell["plasma_membrane"].rmax + 0.6 * padding;
       }
+    });
+  }
+
+  resetGraph() {
+    d3.selectAll(".node").each(function() {
+      this.parentNode.remove();
+    });
+    d3.selectAll(".edge").each(function() {
+      this.parentNode.remove();
     });
   }
 

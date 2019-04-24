@@ -3,9 +3,6 @@ import React from "react";
 export default class FileUpload extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      textRead: false
-    };
     this.handleUpload = this.handleUpload.bind(this);
   }
 
@@ -15,7 +12,7 @@ export default class FileUpload extends React.Component {
 
     reader.onload = function(e) {
       var text = reader.result;
-      console.log(text);
+      // console.log(text);
 
       this.props.onFileUploaded(JSON.parse(text));
     }.bind(this);
