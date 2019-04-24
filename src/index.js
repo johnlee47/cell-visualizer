@@ -13,7 +13,7 @@ import OrganelleDescription from "./OrganelleDescription";
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
   { group: 1, color: "#978cbf", component: "nucleus" },
-  { group: 2, color: "#da950c", component: "endosome" },
+  { group: 2, color: "#da950c", component: "cytoplasm" }, //endosome
   { group: 3, color: "#367baf", component: "plasma_membrane" },
   { group: 4, color: "#ed2cbb", component: "cytoplasm" },
   { group: 5, color: "#23903a", component: "cytoplasm" },
