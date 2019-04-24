@@ -21,7 +21,8 @@ const GroupMapping = [
   { group: 7, color: "#aa873c", component: "cytoplasm" },
   { group: 8, color: "#605294", component: "cytoplasm" },
   { group: 9, color: "#c71f25", component: "cytoplasm" },
-  { group: 10, color: "#c8ee2a", component: "cytoplasm" }
+  { group: 10, color: "#c8ee2a", component: "cytoplasm" },
+  { group: 11, color: "#da950c", component: "endosome" }, //endosome
 ];
 
 
