@@ -38,14 +38,14 @@ export default class FileUpload extends React.Component {
         style={{
           fontSize: 14,
           padding: 20,
-          marginLeft: 5,
+          marginLeft: 10,
           marginTop: 20,
-          backgroundColor: "hsla(204, 30%, 93%, 1)",
+          backgroundColor: "hsla(204, 3%, 98%, 1)",
           width: 260,
           height: 100,
           display: "inline-block",
           borderRadius: 3,
-          boxShadow: "0 1px 3px hsla(0, 0%, 0%, 0.3)"
+          boxShadow: "0 1px 2px hsla(0, 0%, 0%, 0.3)"
         }}
       >
         <input
