@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from "react";
-import { fetchGraphData } from "./utils";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
@@ -10,6 +9,7 @@ import {AutoComplete} from "antd";
 import {Download} from "antd";
 import OrganelleDescription from "./OrganelleDescription";
 import saveSvgAsPng from "./saveSvgAsPng";
+import FileUpload from "./FileUpload";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -27,8 +27,6 @@ const GroupMapping = [
 ];
 
 
-
-
 export class App extends Component {
   constructor(props) {
     super(props);
@@ -39,12 +37,13 @@ export class App extends Component {
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
-    
+    this.handleFileUploaded = this.handleFileUploaded.bind(this);
   }
-  
-   
-  componentDidMount() {
-    fetchGraphData().then(data => this.setState({ data: data }));
+
+  componentDidMount() {}
+
+  handleFileUploaded(data) {
+    this.setState({ data });
   }
 
   handleNodeSelected(node) {
@@ -94,6 +93,7 @@ export class App extends Component {
     const size = this.state.size;
     return this.state.data ? (
       <Fragment>
+        <FileUpload onFileUploaded={this.handleFileUploaded} />
         <div style={{right:15,bottom:15,position:'absolute'}}>
       <Button id="download" type="primary" icon="download" size={'large'}>Download
       </Button>
@@ -113,7 +113,11 @@ export class App extends Component {
       {this.renderVisualization()}
       </Fragment>
     ) : (
+      <div>
+        <FileUpload onFileUploaded={this.handleFileUploaded} />
         <h1>No data to render</h1>
+      </div>
+        
       );
   }
 }
