@@ -2,12 +2,14 @@ import React, { Component, Fragment } from "react";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
+
 import OrganelleDescription from "./OrganelleDescription";
 import FileUpload from "./FileUpload";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
+
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -29,7 +31,7 @@ export class App extends Component {
     super(props);
     this.state = {
       data: undefined,
-      selectedNode: undefined
+      selectedNode: undefined,
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
@@ -49,7 +51,7 @@ export class App extends Component {
     const data = GroupMapping.map(m => {
       const d = Object.assign({}, m);
       d.value =
-        this.state.data.nodes.filter(n => n.group === d.group).length /
+        this.state.data.nodes.filter(n => n.group === d.group).length 
         this.state.data.nodes.length;
       d.label = d.component;
       return d;
@@ -65,11 +67,13 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
+
         <CellVisualizer
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
         />
+
 
         {this.state.selectedNode && (
           <OrganelleDescription

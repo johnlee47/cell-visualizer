@@ -58,6 +58,7 @@ const constraintOutsideCell = (x, y, cell) => {
   };
 };
 
+
 export default class CellVisualizer extends Component {
   constructor(props) {
     super(props);
@@ -73,6 +74,15 @@ export default class CellVisualizer extends Component {
     } else if (this.props.data) {
       this.resetGraph();
       this.initGraph();
+    }
+
+    if (prevProp.selectedNode !== this.props.selectedNode) {
+      this.node.attr('r', radius - 0.75);
+      d3.select(`circle#${this.props.selectedNode.id}`)
+        .attr('r', 20)
+        .style("opacity", .2)      // set the element opacity
+        .style("stroke", "red")    // set the line colour
+        
     }
   }
 
@@ -140,6 +150,7 @@ export default class CellVisualizer extends Component {
     });
   }
 
+
   resetGraph() {
     d3.selectAll(".node").each(function() {
       this.parentNode.remove();
@@ -148,6 +159,7 @@ export default class CellVisualizer extends Component {
       this.parentNode.remove();
     });
   }
+  
 
   initGraph() {
     this.simulation = d3
@@ -163,7 +175,7 @@ export default class CellVisualizer extends Component {
       .force("center", d3.forceCenter(400, 450))
       .force(
         "collision",
-        d3.forceCollide().radius(function(d) {
+        d3.forceCollide().radius(function (d) {
           return 10;
         })
       );
@@ -177,7 +189,7 @@ export default class CellVisualizer extends Component {
       .attr("class", "edge")
       .attr("stroke", "#888")
       .attr("stroke-width", 0.7)
-      .attr("id", function(d) {
+      .attr("id", function (d) {
         return d.id;
       });
 
@@ -186,7 +198,7 @@ export default class CellVisualizer extends Component {
       .data(this.props.data.nodes)
       .enter()
       .append("g")
-      .attr("id", function(d) {
+      .attr("id", function (d) {
         return d.id + "_g";
       });
 
@@ -194,15 +206,17 @@ export default class CellVisualizer extends Component {
       .append("circle")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
+      .attr('id', d => d.id)
       .attr("r", radius - 0.75)
       .attr("class", "node")
       .attr("fill", d => {
         const mapping = this.props.groupMapping.find(m => m.group === d.group);
         return mapping ? mapping.color : "#333";
       })
+
       .on(
         "click",
-        function(d) {
+        function (d) {
           this.props.onNodeSelected(d);
         }.bind(this)
       )
@@ -234,7 +248,7 @@ export default class CellVisualizer extends Component {
       return { x: node.x, y: node.y };
     };
     // Update node positions
-    this.node.each(function(d) {
+    this.node.each(function (d) {
       const result = calculateNewPosition(d);
       let characterLength =
         result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
@@ -281,7 +295,7 @@ export default class CellVisualizer extends Component {
         });
     });
     // Update link
-    this.link.each(function(d) {
+    this.link.each(function (d) {
       const sourcePosition = calculateNewPosition(d.source);
       const targetPosition = calculateNewPosition(d.target);
       d3.select(this)
