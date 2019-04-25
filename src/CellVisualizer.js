@@ -1,6 +1,4 @@
 import React, { Component } from "react";
-const saveSvgAsPng = require("./saveSvgAsPng")
-
 const d3 = require("d3");
 
 // Radius of nodes
@@ -74,7 +72,6 @@ export default class CellVisualizer extends Component {
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
-      this.resetGraph();
       this.initGraph();
     }
 
@@ -82,8 +79,8 @@ export default class CellVisualizer extends Component {
       this.node.attr('r', radius - 0.75);
       d3.select(`circle#${this.props.selectedNode.id}`)
         .attr('r', 20)
-        //.style("opacity", .2)      // set the element opacity
-        //.style("stroke", "red")    // set the line colour
+        .style("opacity", .2)      // set the element opacity
+        .style("stroke", "red")    // set the line colour
         
     }
   }
@@ -106,7 +103,7 @@ export default class CellVisualizer extends Component {
         .node()
         .appendChild(data.documentElement);
       this.svg = d3.select("#svg_wrapper").select("svg");
-      this.svg.attr("width", 1000).attr('id','svg');
+      this.svg.attr("width", 1000);
       // Get the offset value of the whole diagram
       let cellTranslate = this.parseTranslateValues(
         d3
@@ -152,14 +149,6 @@ export default class CellVisualizer extends Component {
     });
   }
 
-  resetGraph() {
-    d3.selectAll(".node").each(function() {
-      this.parentNode.remove();
-    });
-    d3.selectAll(".edge").each(function() {
-      this.parentNode.remove();
-    });
-  }
 
   initGraph() {
     this.simulation = d3
@@ -223,15 +212,8 @@ export default class CellVisualizer extends Component {
       .call(this.drag(this.simulation));
 
     this.simulation.on("tick", this.onTick.bind(this));
-
-    d3.select("#download")
-.on('click', function(){
-    // Get the d3js SVG element and save using saveSvgAsPng.js
-    saveSvgAsPng.saveSvgAsPng(document.getElementById("svg"), "plot.png", {scale: 2, backgroundColor: "#FFFFFF"});
-})
   }
 
-  
   onTick() {
     // Calculate the node's new position after applying the constraints
     const calculateNewPosition = node => {
@@ -257,10 +239,49 @@ export default class CellVisualizer extends Component {
     // Update node positions
     this.node.each(function (d) {
       const result = calculateNewPosition(d);
+      let characterLength =
+        result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
       d3.select(this)
         .attr("cx", result.x)
         .attr("fixed", false)
-        .attr("cy", result.y);
+        .attr("cy", result.y)
+        .on("mouseover", function(d, i) {
+          // Add the text background
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
+            .append("rect")
+            .style("fill", "hsla(204, 80%, 80%, 1)")
+            .attr("x", function() {
+              // Adjust the center of the rectangle
+              return result.x - characterLength / 2;
+            }) // set x position of left side of rectangle
+            .attr("rx", 5)
+            .attr("y", result.y - 40) // set y position of top of rectangle
+            .attr("ry", 5)
+            .attr("width", function() {
+              // The function returns width of the background based on the length of characters
+              return characterLength;
+            })
+            .attr("height", 30)
+            .attr("id", "node" + i);
+
+          //Add the text description
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
+            .append("text")
+            .style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
+            .style("font-size", "16px")
+            .style("font-weight", "600")
+            .attr("x", result.x) // set x position of left side of text
+            .attr("y", result.y) // set y position of bottom of text
+            .attr("dy", "-20") // set offset y position
+            .attr("text-anchor", "middle") // set anchor y justification
+            .attr("id", "node" + i)
+            .text(function(d) {
+              return [result.x.toFixed(2), result.y.toFixed(2)];
+            });
+        })
+        .on("mouseout", function(d, i) {
+          d3.selectAll("#node" + i).remove(); // Removes the on-hover information
+        });
     });
     // Update link
     this.link.each(function (d) {

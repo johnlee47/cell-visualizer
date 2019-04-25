@@ -6,10 +6,8 @@ import { Button, Input, Icon } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import {AutoComplete} from "antd";
-import {Download} from "antd";
 import OrganelleDescription from "./OrganelleDescription";
-import saveSvgAsPng from "./saveSvgAsPng";
-import FileUpload from "./FileUpload";
+
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -33,17 +31,14 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
-      size: 'large'
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
-    this.handleFileUploaded = this.handleFileUploaded.bind(this);
   }
 
-  componentDidMount() {}
 
-  handleFileUploaded(data) {
-    this.setState({ data });
+  componentDidMount() {
+    fetchGraphData().then(data => this.setState({ data: data }));
   }
 
   handleNodeSelected(node) {
@@ -90,34 +85,26 @@ export class App extends Component {
    
 
   render() {
-    const size = this.state.size;
     return this.state.data ? (
       <Fragment>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
-        <div style={{right:15,bottom:15,position:'absolute'}}>
-      <Button id="download" type="primary" icon="download" size={'large'}>Download
-      </Button>
-      </div>
-      <div style= {{width:'100vw',textAlign:'center',position:'absolute',top:15}}>
+
       <AutoComplete
         dataSource={this.state.data.nodes.map(d => d.id)}
         placeholder="input here"
         className="custom"
-        style={{
-          width: 600}}
+        style={{ top: 15,
+          left :600,
+          width: 600,
+          display: "inline-block"}}
         onSelect={selectedId => {this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId))}}
         filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
       >
       </AutoComplete>
-      </div>
       {this.renderVisualization()}
       </Fragment>
     ) : (
-      <div>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
         <h1>No data to render</h1>
-      </div>
-        
+      
       );
   }
 }
