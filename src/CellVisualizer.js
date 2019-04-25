@@ -72,6 +72,7 @@ export default class CellVisualizer extends Component {
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
+      this.resetGraph();
       this.initGraph();
     }
 
@@ -149,7 +150,15 @@ export default class CellVisualizer extends Component {
     });
   }
 
-
+  resetGraph() {
+    d3.selectAll(".node").each(function() {
+      this.parentNode.remove();
+    });
+    d3.selectAll(".edge").each(function() {
+      this.parentNode.remove();
+    });
+  }
+  
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
