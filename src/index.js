@@ -51,7 +51,7 @@ export class App extends Component {
     const data = GroupMapping.map(m => {
       const d = Object.assign({}, m);
       d.value =
-        this.state.data.nodes.filter(n => n.group === d.group).length 
+        this.state.data.nodes.filter(n => n.group === d.group).length /
         this.state.data.nodes.length;
       d.label = d.component;
       return d;
