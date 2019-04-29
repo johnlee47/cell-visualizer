@@ -15,7 +15,7 @@ import { AutoComplete } from "antd";
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
   { group: 1, color: "#978cbf", component: "nucleus" },
-  { group: 2, color: "#da950c", component: "endosome" },
+  { group: 2, color: "#da950c", component: "cytoplasm" }, //endosome
   { group: 3, color: "#367baf", component: "plasma_membrane" },
   { group: 4, color: "#ed2cbb", component: "cytoplasm" },
   { group: 5, color: "#23903a", component: "cytoplasm" },
@@ -23,7 +23,8 @@ const GroupMapping = [
   { group: 7, color: "#aa873c", component: "cytoplasm" },
   { group: 8, color: "#605294", component: "cytoplasm" },
   { group: 9, color: "#c71f25", component: "cytoplasm" },
-  { group: 10, color: "#c8ee2a", component: "cytoplasm" }
+  { group: 10, color: "#c8ee2a", component: "cytoplasm" },
+  { group: 11, color: "#da950c", component: "endosome" }, //endosome
 ];
 
 export class App extends Component {

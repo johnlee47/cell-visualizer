@@ -304,6 +304,18 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
+
+    let presentOrganelles = new Set();
+      this.node.each(function(d){
+        presentOrganelles.add(d.group);
+      })
+
+    this.props.groupMapping.forEach(organelle => {
+      if(presentOrganelles.has(organelle.group) == false){
+        d3.selectAll("#"+organelle.component+"_group")
+        .remove();
+      }
+    });
   }
 
   drag(simulation) {
