@@ -59,6 +59,7 @@ const constraintOutsideCell = (x, y, cell) => {
   };
 };
 
+
 export default class CellVisualizer extends Component {
   constructor(props) {
     super(props);
@@ -72,7 +73,17 @@ export default class CellVisualizer extends Component {
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
+      this.resetGraph();
       this.initGraph();
+    }
+
+    if (prevProp.selectedNode !== this.props.selectedNode) {
+      this.node.attr('r', radius - 0.75);
+      d3.select(`circle#${this.props.selectedNode.id}`)
+        .attr('r', 20)
+        .style("opacity", .2)      // set the element opacity
+        .style("stroke", "red")    // set the line colour
+        
     }
   }
 
@@ -144,6 +155,17 @@ export default class CellVisualizer extends Component {
     });
   }
 
+
+  resetGraph() {
+    d3.selectAll(".node").each(function() {
+      this.parentNode.remove();
+    });
+    d3.selectAll(".edge").each(function() {
+      this.parentNode.remove();
+    });
+  }
+  
+
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
@@ -189,12 +211,14 @@ export default class CellVisualizer extends Component {
       .append("circle")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
+      .attr('id', d => d.id)
       .attr("r", radius - 0.75)
       .attr("class", "node")
       .attr("fill", d => {
         const mapping = this.props.groupMapping.find(m => m.group === d.group);
         return mapping ? mapping.color : "#333";
       })
+
       .on(
         "click",
         function (d) {
@@ -231,10 +255,49 @@ export default class CellVisualizer extends Component {
     // Update node positions
     this.node.each(function (d) {
       const result = calculateNewPosition(d);
+      let characterLength =
+        result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
       d3.select(this)
         .attr("cx", result.x)
         .attr("fixed", false)
-        .attr("cy", result.y);
+        .attr("cy", result.y)
+        .on("mouseover", function(d, i) {
+          // Add the text background
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
+            .append("rect")
+            .style("fill", "hsla(204, 80%, 80%, 1)")
+            .attr("x", function() {
+              // Adjust the center of the rectangle
+              return result.x - characterLength / 2;
+            }) // set x position of left side of rectangle
+            .attr("rx", 5)
+            .attr("y", result.y - 40) // set y position of top of rectangle
+            .attr("ry", 5)
+            .attr("width", function() {
+              // The function returns width of the background based on the length of characters
+              return characterLength;
+            })
+            .attr("height", 30)
+            .attr("id", "node" + i);
+
+          //Add the text description
+          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
+            .append("text")
+            .style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
+            .style("font-size", "16px")
+            .style("font-weight", "600")
+            .attr("x", result.x) // set x position of left side of text
+            .attr("y", result.y) // set y position of bottom of text
+            .attr("dy", "-20") // set offset y position
+            .attr("text-anchor", "middle") // set anchor y justification
+            .attr("id", "node" + i)
+            .text(function(d) {
+              return [result.x.toFixed(2), result.y.toFixed(2)];
+            });
+        })
+        .on("mouseout", function(d, i) {
+          d3.selectAll("#node" + i).remove(); // Removes the on-hover information
+        });
     });
     // Update link
     this.link.each(function (d) {
@@ -246,10 +309,6 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
-
-
-    console.log(this.props.groupMapping);
-    console.log(this.props.data.nodes);
 
     let alwaysVisibleOrganelles = new Set(["extracellular", "cell_wall", "cytoplasm", "plasma_membrane"]);
     let presentOrganelles = new Set();
@@ -263,6 +322,7 @@ export default class CellVisualizer extends Component {
           .remove();
       }
     });
+
 
   }
 

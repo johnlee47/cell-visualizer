@@ -1,13 +1,16 @@
 import React, { Component, Fragment } from "react";
-import { fetchGraphData } from "./utils";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
+
+import OrganelleDescription from "./OrganelleDescription";
+import FileUpload from "./FileUpload";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
 import OrganelleDescription from "./OrganelleDescription";
+
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -31,31 +34,29 @@ const GroupMapping = [
   { group: 18, color: "#4ecbb1", component: "lysosome" },
   { group: 19, color: "#aa873c", component: "vacuole" },
   { group: 19, color: "#aa873c", component: "nucleus" }
+
 ];
-
-
 
 export class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       data: undefined,
-      selectedNode: undefined
+      selectedNode: undefined,
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
-
+    this.handleFileUploaded = this.handleFileUploaded.bind(this);
   }
 
+  componentDidMount() { }
 
-  componentDidMount() {
-    fetchGraphData().then(data => this.setState({ data: data }));
+  handleFileUploaded(data) {
+    this.setState({ data });
   }
-
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
-
 
   renderVisualization() {
     const data = GroupMapping.map(m => {
@@ -78,7 +79,12 @@ export class App extends Component {
         }}
       >
 
-        <CellVisualizer groupMapping={GroupMapping} data={this.state.data} onNodeSelected={this.handleNodeSelected} />
+        <CellVisualizer
+          groupMapping={GroupMapping}
+          data={this.state.data}
+          onNodeSelected={this.handleNodeSelected}
+        />
+
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -93,29 +99,35 @@ export class App extends Component {
     );
   }
 
-
-
   render() {
     return this.state.data ? (
       <Fragment>
+        <FileUpload onFileUploaded={this.handleFileUploaded} />
+
         <AutoComplete
           dataSource={this.state.data.nodes.map(d => d.id)}
           placeholder="input here"
           className="custom"
-          style={{
-            top: 15,
-            left: 600,
-            width: 600,
-            display: "inline-block"
+          style={{ top: 15, left: 600, width: 600, display: "inline-block" }}
+          onSelect={selectedId => {
+            this.handleNodeSelected(
+              this.state.data.nodes.find(n => n.id === selectedId)
+            );
           }}
-          onSelect={selectedId => { this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId)) }}
-          filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
-        >
-        </AutoComplete>
+          filterOption={(inputValue, option) =>
+            option.props.children
+              .toUpperCase()
+              .indexOf(inputValue.toUpperCase()) !== -1
+          }
+        />
         {this.renderVisualization()}
       </Fragment>
     ) : (
-        <h1>No data to render</h1>
+        <div>
+          <FileUpload onFileUploaded={this.handleFileUploaded} />
+
+          <h1>No data to render</h1>
+        </div>
       );
   }
 }

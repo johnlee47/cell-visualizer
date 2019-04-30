@@ -14,13 +14,19 @@ export default class OrganelleDescription extends React.Component {
         style={{
           position: "absolute",
           display: "flex",
-          height: "100vh",
+          height: 180,
           right: 0,
           top: 0,
           paddingTop: 15,
           paddingRight: 15,
+          paddingLeft: 25,
+          marginTop: 20,
+          marginLeft: 5,
           flexDirection: "column",
-          width: 350
+          width: 350,
+          backgroundColor: "hsla(204, 3%, 98%, 1)",
+          borderRadius: 3,
+          boxShadow: "0 1px 2px hsla(0, 0%, 0%, 0.3)"
         }}
       >
         {selectedNode && (
