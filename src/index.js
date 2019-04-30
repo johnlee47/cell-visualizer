@@ -10,6 +10,7 @@ import "./style.css";
 import { AutoComplete } from "antd";
 
 
+
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
