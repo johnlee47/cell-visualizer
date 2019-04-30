@@ -9,22 +9,32 @@ import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
+import OrganelleDescription from "./OrganelleDescription";
 
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
-  { group: 1, color: "#978cbf", component: "nucleus" },
-  { group: 2, color: "#da950c", component: "cytoplasm" }, //endosome
-  { group: 3, color: "#367baf", component: "plasma_membrane" },
-  { group: 4, color: "#ed2cbb", component: "cytoplasm" },
-  { group: 5, color: "#23903a", component: "cytoplasm" },
-  { group: 6, color: "#4ecbb1", component: "cytoplasm" },
-  { group: 7, color: "#aa873c", component: "cytoplasm" },
-  { group: 8, color: "#605294", component: "cytoplasm" },
-  { group: 9, color: "#c71f25", component: "cytoplasm" },
-  { group: 10, color: "#c8ee2a", component: "cytoplasm" },
-  { group: 11, color: "#da950c", component: "endosome" }, //endosome
+  { group: 1, color: "#978cbf", component: "cytoplasm" },
+  { group: 2, color: "#da950c", component: "endosome" },
+  { group: 3, color: "#367baf", component: "glyoxysome" },
+  { group: 4, color: "#ed2cbb", component: "centrosome" },
+  { group: 5, color: "#23903a", component: "peroxisome" },
+  { group: 6, color: "#4ecbb1", component: "plasma_membrane" },
+  { group: 7, color: "#aa873c", component: "glycosome" },
+  { group: 8, color: "#605294", component: "mtoc" },
+  { group: 9, color: "#c71f25", component: "cell_wall" },
+  { group: 10, color: "#c8ee2a", component: "chloroplast" },
+  { group: 11, color: "#740b28", component: "apicoplast" },
+  { group: 13, color: "#978cbf", component: "amyloplast" },
+  { group: 14, color: "#da950c", component: "golgi_apparatus" },
+  { group: 15, color: "#367baf", component: "endoplasmic_reticulum" },
+  { group: 16, color: "#ed2cbb", component: "plastid" },
+  { group: 17, color: "#23903a", component: "mitochondrion" },
+  { group: 18, color: "#4ecbb1", component: "lysosome" },
+  { group: 19, color: "#aa873c", component: "vacuole" },
+  { group: 19, color: "#aa873c", component: "nucleus" }
+
 ];
 
 export class App extends Component {
@@ -39,7 +49,7 @@ export class App extends Component {
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
   handleFileUploaded(data) {
     this.setState({ data });
@@ -113,12 +123,12 @@ export class App extends Component {
         {this.renderVisualization()}
       </Fragment>
     ) : (
-      <div>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
+        <div>
+          <FileUpload onFileUploaded={this.handleFileUploaded} />
 
-        <h1>No data to render</h1>
-      </div>
-    );
+          <h1>No data to render</h1>
+        </div>
+      );
   }
 }
 
