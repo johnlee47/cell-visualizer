@@ -9,7 +9,6 @@ import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
-import OrganelleDescription from "./OrganelleDescription";
 
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
