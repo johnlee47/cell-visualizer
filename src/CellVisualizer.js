@@ -52,10 +52,9 @@ const constraintOutsideCell = (x, y, cell) => {
     };
   }
   // Do not let the node out of the viewport
-  let w = 1000, h = 900;
   return {
-    x: x < padding ? padding : x > w - padding ? w - padding : x,
-    y: y < padding ? padding : y > h - padding ? h - padding : y
+    x: x < padding ? (xt = padding) : x > w - padding ? w - padding : x,
+    y: y < padding ? (yt = padding) : y > h - padding ? h - padding : y
   };
 };
 
@@ -73,7 +72,6 @@ export default class CellVisualizer extends Component {
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
-      this.resetGraph();
       this.initGraph();
     }
 
@@ -142,29 +140,15 @@ export default class CellVisualizer extends Component {
             rmin: 0
           };
         });
-
-
       // Save minimum radius for memebrane like cellular components
       this.cell["plasma_membrane"].rmin =
         this.cell["cytoplasm"].rmax + 0.6 * padding;
-
       if (this.cell["cell_wall"]) {
-        this.cell['cell_wall'].rmin =
-          this.cell["plasma_membrane"].rmax + 0.6 * padding;
+        this.cell["plasma_membrane"].rmax + 0.6 * padding;
       }
     });
   }
 
-
-  resetGraph() {
-    d3.selectAll(".node").each(function() {
-      this.parentNode.remove();
-    });
-    d3.selectAll(".edge").each(function() {
-      this.parentNode.remove();
-    });
-  }
-  
 
   initGraph() {
     this.simulation = d3
@@ -255,49 +239,10 @@ export default class CellVisualizer extends Component {
     // Update node positions
     this.node.each(function (d) {
       const result = calculateNewPosition(d);
-      let characterLength =
-        result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
       d3.select(this)
         .attr("cx", result.x)
         .attr("fixed", false)
-        .attr("cy", result.y)
-        .on("mouseover", function(d, i) {
-          // Add the text background
-          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
-            .append("rect")
-            .style("fill", "hsla(204, 80%, 80%, 1)")
-            .attr("x", function() {
-              // Adjust the center of the rectangle
-              return result.x - characterLength / 2;
-            }) // set x position of left side of rectangle
-            .attr("rx", 5)
-            .attr("y", result.y - 40) // set y position of top of rectangle
-            .attr("ry", 5)
-            .attr("width", function() {
-              // The function returns width of the background based on the length of characters
-              return characterLength;
-            })
-            .attr("height", 30)
-            .attr("id", "node" + i);
-
-          //Add the text description
-          d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
-            .append("text")
-            .style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
-            .style("font-size", "16px")
-            .style("font-weight", "600")
-            .attr("x", result.x) // set x position of left side of text
-            .attr("y", result.y) // set y position of bottom of text
-            .attr("dy", "-20") // set offset y position
-            .attr("text-anchor", "middle") // set anchor y justification
-            .attr("id", "node" + i)
-            .text(function(d) {
-              return [result.x.toFixed(2), result.y.toFixed(2)];
-            });
-        })
-        .on("mouseout", function(d, i) {
-          d3.selectAll("#node" + i).remove(); // Removes the on-hover information
-        });
+        .attr("cy", result.y);
     });
     // Update link
     this.link.each(function (d) {
@@ -309,21 +254,6 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
-
-    let alwaysVisibleOrganelles = new Set(["extracellular", "cell_wall", "cytoplasm", "plasma_membrane"]);
-    let presentOrganelles = new Set();
-    this.node.each(function (d) {
-      presentOrganelles.add(d.group);
-    })
-
-    this.props.groupMapping.forEach(organelle => {
-      if (!presentOrganelles.has(organelle.group) && !alwaysVisibleOrganelles.has(organelle.component)) {
-        d3.selectAll("#" + organelle.component + "_group")
-          .remove();
-      }
-    });
-
-
   }
 
   drag(simulation) {
