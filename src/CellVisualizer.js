@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import { func } from "prop-types";
+
 const d3 = require("d3");
 
 // Radius of nodes
@@ -59,6 +61,7 @@ const constraintOutsideCell = (x, y, cell) => {
 };
 
 
+
 export default class CellVisualizer extends Component {
   constructor(props) {
     super(props);
@@ -75,18 +78,21 @@ export default class CellVisualizer extends Component {
       this.initGraph();
     }
 
-    if (prevProp.selectedNode !== this.props.selectedNode) {
+    if (this.props.selectedNode && prevProp.selectedNode !== this.props.selectedNode) {
       this.node.attr('r', radius - 0.75);
       d3.select(`circle#${this.props.selectedNode.id}`)
-        .attr('r', 20)
-        .style("opacity", .2)      // set the element opacity
-        .style("stroke", "red")    // set the line colour
-        
+        .transition()
+        .duration(200)
+        .attr('r', 15)
+    }
+    if (!this.props.selectedNode) {
+      this.node.attr('r', radius - 0.75);
     }
   }
 
   componentDidMount() {
     this.initCellStructure().then(() => this.props.data && this.initGraph());
+
   }
 
   parseTranslateValues(translate) {
@@ -103,7 +109,7 @@ export default class CellVisualizer extends Component {
         .node()
         .appendChild(data.documentElement);
       this.svg = d3.select("#svg_wrapper").select("svg");
-      this.svg.attr("width", 1000);
+      this.svg.attr("width", 1000).attr('id', 'svg');
       // Get the offset value of the whole diagram
       let cellTranslate = this.parseTranslateValues(
         d3
@@ -203,16 +209,41 @@ export default class CellVisualizer extends Component {
         return mapping ? mapping.color : "#333";
       })
 
-      .on(
-        "click",
-        function (d) {
-          this.props.onNodeSelected(d);
-        }.bind(this)
-      )
+      .on('mouseover', fade(.1)).on('mouseout', fade(1))
+
+      .on("click",function(d,i){
+        this.props.onNodeSelected(d);
+      }.bind(this))
       .call(this.drag(this.simulation));
 
+    let node = this.node
+
+    let link = this.link
+
+    const linkedByIndex = {};
+    this.props.data.links.forEach(d => {
+      linkedByIndex[`${d.source.index},${d.target.index}`] = 1;
+    });
+
+    //Checks if they are connected 
+    function isConnected(a, b) {
+      return linkedByIndex[`${a.index},${b.index}`] || linkedByIndex[`${b.index},${a.index}`] || a.index === b.index;
+    }
+
+    //fades the unconnected nodes and links
+    function fade(opacity) {
+      return d => {
+        node.style('stroke-opacity', function (o) {
+          const thisOpacity = isConnected(d, o) ? 1 : opacity;
+          this.setAttribute('fill-opacity', thisOpacity);
+          return thisOpacity;
+        });
+        link.style('stroke-opacity', o => (o.source === d || o.target === d ? 1 : opacity));
+      };
+    }
     this.simulation.on("tick", this.onTick.bind(this));
   }
+
 
   onTick() {
     // Calculate the node's new position after applying the constraints
@@ -267,6 +298,7 @@ export default class CellVisualizer extends Component {
       d.fx = d3.event.x;
       d.fy = d3.event.y;
     }
+
 
     function dragended(d) {
       if (!d3.event.active) simulation.alphaTarget(0);
