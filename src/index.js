@@ -22,14 +22,15 @@ const GroupMapping = [
   { group: 8, color: "#605294", component: "mtoc" },
   { group: 9, color: "#c71f25", component: "cell_wall" },
   { group: 10, color: "#c8ee2a", component: "chloroplast" },
-  { group: 11, color: "#740b28", component: "aplcoplast" },
+  { group: 11, color: "#740b28", component: "apicoplast" },
   { group: 13, color: "#978cbf", component: "amyloplast" },
   { group: 14, color: "#da950c", component: "golgi_apparatus" },
   { group: 15, color: "#367baf", component: "endoplasmic_reticulum" },
   { group: 16, color: "#ed2cbb", component: "plastid" },
   { group: 17, color: "#23903a", component: "mitochondrion" },
   { group: 18, color: "#4ecbb1", component: "lysosome" },
-  { group: 19, color: "#aa873c", component: "vacuole" }
+  { group: 19, color: "#aa873c", component: "vacuole" },
+  { group: 19, color: "#aa873c", component: "nucleus" }
 ];
 
 

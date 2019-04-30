@@ -44,7 +44,6 @@ const constraintInsideCell = (x, y, component, components = []) => {
 const constraintOutsideCell = (x, y, cell) => {
   // If the cell has a cellwall, consider that its outter border. If not consider the plasma membrane its outer border
   var border = cell["cell_wall"] ? cell["cell_wall"] : cell["plasma_membrane"];
-  console.log('border', cell)
   let R = calculateDistance(x, y, border.cx, border.cy);
   if (R < border.rmax + padding) {
     return {
@@ -132,7 +131,7 @@ export default class CellVisualizer extends Component {
             rmin: 0
           };
         });
-      console.log(this.cell['cell_wall'])
+
 
       // Save minimum radius for memebrane like cellular components
       this.cell["plasma_membrane"].rmin =
@@ -141,8 +140,6 @@ export default class CellVisualizer extends Component {
       if (this.cell["cell_wall"]) {
         this.cell['cell_wall'].rmin =
           this.cell["plasma_membrane"].rmax + 0.6 * padding;
-        console.log(this.cell['cell_wall'])
-
       }
     });
   }
@@ -229,7 +226,6 @@ export default class CellVisualizer extends Component {
             return constraintInsideCell(node.x, node.y, component);
         }
       }
-      console.log("returning values:\n Mapping:" + mapping + node.x + ", " + node.y);
       return { x: node.x, y: node.y };
     };
     // Update node positions
@@ -250,6 +246,24 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
+
+
+    console.log(this.props.groupMapping);
+    console.log(this.props.data.nodes);
+
+    let alwaysVisibleOrganelles = new Set(["extracellular", "cell_wall", "cytoplasm", "plasma_membrane"]);
+    let presentOrganelles = new Set();
+    this.node.each(function (d) {
+      presentOrganelles.add(d.group);
+    })
+
+    this.props.groupMapping.forEach(organelle => {
+      if (!presentOrganelles.has(organelle.group) && !alwaysVisibleOrganelles.has(organelle.component)) {
+        d3.selectAll("#" + organelle.component + "_group")
+          .remove();
+      }
+    });
+
   }
 
   drag(simulation) {
