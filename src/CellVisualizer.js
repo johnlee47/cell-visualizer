@@ -44,6 +44,7 @@ const constraintInsideCell = (x, y, component, components = []) => {
 const constraintOutsideCell = (x, y, cell) => {
   // If the cell has a cellwall, consider that its outter border. If not consider the plasma membrane its outer border
   var border = cell["cell_wall"] ? cell["cell_wall"] : cell["plasma_membrane"];
+  console.log('border', cell)
   let R = calculateDistance(x, y, border.cx, border.cy);
   if (R < border.rmax + padding) {
     return {
@@ -52,10 +53,10 @@ const constraintOutsideCell = (x, y, cell) => {
     };
   }
   // Do not let the node out of the viewport
-  let w,h = 800;
+  let w = 1000, h = 900;
   return {
-    x: x < padding ? (xt = padding) : x > w - padding ? w - padding : x,
-    y: y < padding ? (yt = padding) : y > h - padding ? h - padding : y
+    x: x < padding ? padding : x > w - padding ? w - padding : x,
+    y: y < padding ? padding : y > h - padding ? h - padding : y
   };
 };
 
@@ -131,11 +132,17 @@ export default class CellVisualizer extends Component {
             rmin: 0
           };
         });
+      console.log(this.cell['cell_wall'])
+
       // Save minimum radius for memebrane like cellular components
       this.cell["plasma_membrane"].rmin =
         this.cell["cytoplasm"].rmax + 0.6 * padding;
+
       if (this.cell["cell_wall"]) {
-        this.cell["plasma_membrane"].rmax + 0.6 * padding;
+        this.cell['cell_wall'].rmin =
+          this.cell["plasma_membrane"].rmax + 0.6 * padding;
+        console.log(this.cell['cell_wall'])
+
       }
     });
   }
@@ -154,7 +161,7 @@ export default class CellVisualizer extends Component {
       .force("center", d3.forceCenter(400, 450))
       .force(
         "collision",
-        d3.forceCollide().radius(function(d) {
+        d3.forceCollide().radius(function (d) {
           return 10;
         })
       );
@@ -168,7 +175,7 @@ export default class CellVisualizer extends Component {
       .attr("class", "edge")
       .attr("stroke", "#888")
       .attr("stroke-width", 0.7)
-      .attr("id", function(d) {
+      .attr("id", function (d) {
         return d.id;
       });
 
@@ -177,7 +184,7 @@ export default class CellVisualizer extends Component {
       .data(this.props.data.nodes)
       .enter()
       .append("g")
-      .attr("id", function(d) {
+      .attr("id", function (d) {
         return d.id + "_g";
       });
 
@@ -193,7 +200,7 @@ export default class CellVisualizer extends Component {
       })
       .on(
         "click",
-        function(d) {
+        function (d) {
           this.props.onNodeSelected(d);
         }.bind(this)
       )
@@ -222,10 +229,11 @@ export default class CellVisualizer extends Component {
             return constraintInsideCell(node.x, node.y, component);
         }
       }
+      console.log("returning values:\n Mapping:" + mapping + node.x + ", " + node.y);
       return { x: node.x, y: node.y };
     };
     // Update node positions
-    this.node.each(function(d) {
+    this.node.each(function (d) {
       const result = calculateNewPosition(d);
       d3.select(this)
         .attr("cx", result.x)
@@ -233,7 +241,7 @@ export default class CellVisualizer extends Component {
         .attr("cy", result.y);
     });
     // Update link
-    this.link.each(function(d) {
+    this.link.each(function (d) {
       const sourcePosition = calculateNewPosition(d.source);
       const targetPosition = calculateNewPosition(d.target);
       d3.select(this)
@@ -242,22 +250,6 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
-
-    //function formatOrganelles(){
-      /*let presentOrganelles = new Set();
-      this.node.each(function(d){
-        presentOrganelles.add(d.group);
-      })
-
-      this.props.groupMapping.forEach(organelle => {
-        if(presentOrganelles.has(organelle.component) == false){
-          d3.selectAll("#"+organelle.component+"_group")
-          .style("opacity",0);
-        }
-      });
-    //}
-
-    //formatOrganelles();*/
   }
 
   drag(simulation) {

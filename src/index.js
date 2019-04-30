@@ -6,21 +6,21 @@ import { PercentageChart } from "./PercentageChart";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
-import {AutoComplete} from "antd";
+import { AutoComplete } from "antd";
 import OrganelleDescription from "./OrganelleDescription";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
-  { group: 1, color: "#978cbf", component: "nucleus" },
+  { group: 1, color: "#978cbf", component: "cytoplasm" },
   { group: 2, color: "#da950c", component: "endosome" },
-  { group: 3, color: "#367baf", component: "plasma_membrane" },
-  { group: 4, color: "#ed2cbb", component: "cell_wall" },
-  { group: 5, color: "#23903a", component: "glyoxysome" },
-  { group: 6, color: "#4ecbb1", component: "peroxisome" },
+  { group: 3, color: "#367baf", component: "glyoxysome" },
+  { group: 4, color: "#ed2cbb", component: "centrosome" },
+  { group: 5, color: "#23903a", component: "peroxisome" },
+  { group: 6, color: "#4ecbb1", component: "plasma_membrane" },
   { group: 7, color: "#aa873c", component: "glycosome" },
   { group: 8, color: "#605294", component: "mtoc" },
-  { group: 9, color: "#c71f25", component: "centrosome" },
+  { group: 9, color: "#c71f25", component: "cell_wall" },
   { group: 10, color: "#c8ee2a", component: "chloroplast" },
   { group: 11, color: "#740b28", component: "aplcoplast" },
   { group: 13, color: "#978cbf", component: "amyloplast" },
@@ -43,10 +43,10 @@ export class App extends Component {
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
-    
+
   }
-  
-   
+
+
   componentDidMount() {
     fetchGraphData().then(data => this.setState({ data: data }));
   }
@@ -76,7 +76,7 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-        
+
         <CellVisualizer groupMapping={GroupMapping} data={this.state.data} onNodeSelected={this.handleNodeSelected} />
 
         {this.state.selectedNode && (
@@ -84,7 +84,7 @@ export class App extends Component {
             selectedNode={this.state.selectedNode}
             onNodeSelected={this.handleNodeSelected}
           />
-        )}        
+        )}
         <div style={{ position: "absolute", bottom: 0, width: 600 }}>
           <PercentageChart data={data} />
         </div>
@@ -92,24 +92,26 @@ export class App extends Component {
     );
   }
 
-   
+
 
   render() {
     return this.state.data ? (
       <Fragment>
-      <AutoComplete
-        dataSource={this.state.data.nodes.map(d => d.id)}
-        placeholder="input here"
-        className="custom"
-        style={{ top: 15,
-          left :600,
-          width: 600,
-          display: "inline-block"}}
-        onSelect={selectedId => {this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId))}}
-        filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
-      >
-      </AutoComplete>
-      {this.renderVisualization()}
+        <AutoComplete
+          dataSource={this.state.data.nodes.map(d => d.id)}
+          placeholder="input here"
+          className="custom"
+          style={{
+            top: 15,
+            left: 600,
+            width: 600,
+            display: "inline-block"
+          }}
+          onSelect={selectedId => { this.handleNodeSelected(this.state.data.nodes.find(n => n.id === selectedId)) }}
+          filterOption={(inputValue, option) => option.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
+        >
+        </AutoComplete>
+        {this.renderVisualization()}
       </Fragment>
     ) : (
         <h1>No data to render</h1>
