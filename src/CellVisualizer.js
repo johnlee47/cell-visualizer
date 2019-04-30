@@ -150,6 +150,7 @@ export default class CellVisualizer extends Component {
     });
   }
 
+
   resetGraph() {
     d3.selectAll(".node").each(function() {
       this.parentNode.remove();
@@ -159,6 +160,7 @@ export default class CellVisualizer extends Component {
     });
   }
   
+
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
@@ -301,6 +303,18 @@ export default class CellVisualizer extends Component {
         .attr("y1", sourcePosition.y)
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
+    });
+
+    let presentOrganelles = new Set();
+      this.node.each(function(d){
+        presentOrganelles.add(d.group);
+      })
+
+    this.props.groupMapping.forEach(organelle => {
+      if(presentOrganelles.has(organelle.group) == false){
+        d3.selectAll("#"+organelle.component+"_group")
+        .remove();
+      }
     });
   }
 
