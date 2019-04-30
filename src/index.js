@@ -2,18 +2,19 @@ import React, { Component, Fragment } from "react";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
-import { Button, Input, Icon } from "antd";
+import OrganelleDescription from "./OrganelleDescription";
+import FileUpload from "./FileUpload";
+import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
-import OrganelleDescription from "./OrganelleDescription";
-import FileUpload from "./FileUpload";
+
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
   { group: 1, color: "#978cbf", component: "nucleus" },
-  { group: 2, color: "#da950c", component: "endosome" },
+  { group: 2, color: "#da950c", component: "cytoplasm" }, //endosome
   { group: 3, color: "#367baf", component: "plasma_membrane" },
   { group: 4, color: "#ed2cbb", component: "cytoplasm" },
   { group: 5, color: "#23903a", component: "cytoplasm" },
@@ -21,7 +22,8 @@ const GroupMapping = [
   { group: 7, color: "#aa873c", component: "cytoplasm" },
   { group: 8, color: "#605294", component: "cytoplasm" },
   { group: 9, color: "#c71f25", component: "cytoplasm" },
-  { group: 10, color: "#c8ee2a", component: "cytoplasm" }
+  { group: 10, color: "#c8ee2a", component: "cytoplasm" },
+  { group: 11, color: "#da950c", component: "endosome" }, //endosome
 ];
 
 export class App extends Component {
@@ -41,7 +43,6 @@ export class App extends Component {
   handleFileUploaded(data) {
     this.setState({ data });
   }
-
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
@@ -49,8 +50,9 @@ export class App extends Component {
   renderVisualization() {
     const data = GroupMapping.map(m => {
       const d = Object.assign({}, m);
-      d.value = this.state.data.nodes.filter(n => n.group === d.group).length;
-      this.state.data.nodes.length;
+      d.value =
+        this.state.data.nodes.filter(n => n.group === d.group).length /
+        this.state.data.nodes.length;
       d.label = d.component;
       return d;
     });
@@ -65,12 +67,13 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
+
         <CellVisualizer
-          selectedNode={this.state.selectedNode}
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
         />
+
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -89,6 +92,7 @@ export class App extends Component {
     return this.state.data ? (
       <Fragment>
         <FileUpload onFileUploaded={this.handleFileUploaded} />
+
         <AutoComplete
           dataSource={this.state.data.nodes.map(d => d.id)}
           placeholder="input here"
@@ -110,8 +114,8 @@ export class App extends Component {
     ) : (
       <div>
         <FileUpload onFileUploaded={this.handleFileUploaded} />
+
         <h1>No data to render</h1>
-        );
       </div>
     );
   }
