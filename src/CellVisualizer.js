@@ -52,9 +52,10 @@ const constraintOutsideCell = (x, y, cell) => {
     };
   }
   // Do not let the node out of the viewport
+  let w = 1000, h = 900;
   return {
-    x: x < padding ? (xt = padding) : x > w - padding ? w - padding : x,
-    y: y < padding ? (yt = padding) : y > h - padding ? h - padding : y
+    x: x < padding ? padding : x > w - padding ? w - padding : x,
+    y: y < padding ? padding : y > h - padding ? h - padding : y
   };
 };
 
@@ -141,11 +142,15 @@ export default class CellVisualizer extends Component {
             rmin: 0
           };
         });
+
+
       // Save minimum radius for memebrane like cellular components
       this.cell["plasma_membrane"].rmin =
         this.cell["cytoplasm"].rmax + 0.6 * padding;
+
       if (this.cell["cell_wall"]) {
-        this.cell["plasma_membrane"].rmax + 0.6 * padding;
+        this.cell['cell_wall'].rmin =
+          this.cell["plasma_membrane"].rmax + 0.6 * padding;
       }
     });
   }
@@ -305,17 +310,20 @@ export default class CellVisualizer extends Component {
         .attr("y2", targetPosition.y);
     });
 
+    let alwaysVisibleOrganelles = new Set(["extracellular", "cell_wall", "cytoplasm", "plasma_membrane"]);
     let presentOrganelles = new Set();
-      this.node.each(function(d){
-        presentOrganelles.add(d.group);
-      })
+    this.node.each(function (d) {
+      presentOrganelles.add(d.group);
+    })
 
     this.props.groupMapping.forEach(organelle => {
-      if(presentOrganelles.has(organelle.group) == false){
-        d3.selectAll("#"+organelle.component+"_group")
-        .remove();
+      if (!presentOrganelles.has(organelle.group) && !alwaysVisibleOrganelles.has(organelle.component)) {
+        d3.selectAll("#" + organelle.component + "_group")
+          .remove();
       }
     });
+
+
   }
 
   drag(simulation) {
