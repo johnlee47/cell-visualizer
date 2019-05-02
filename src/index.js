@@ -9,8 +9,6 @@ import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
 
-
-
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { group: 0, color: "#740b28", component: "extracellular" },
@@ -24,7 +22,7 @@ const GroupMapping = [
   { group: 8, color: "#605294", component: "cytoplasm" },
   { group: 9, color: "#c71f25", component: "cytoplasm" },
   { group: 10, color: "#c8ee2a", component: "cytoplasm" },
-  { group: 11, color: "#da950c", component: "endosome" }, //endosome
+  { group: 11, color: "#da950c", component: "endosome" } //endosome
 ];
 
 export class App extends Component {
@@ -32,15 +30,24 @@ export class App extends Component {
     super(props);
     this.state = {
       data: undefined,
-      selectedNode: undefined
+      selectedNode: undefined,
+      selectedFile: null,
+      selectedFileList: []
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
+    this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
   }
 
   componentDidMount() {}
 
+  handleUploadedFileList(file) {
+    this.setState({
+      selectedFile: file,
+      selectedFileList: [file]
+    });
+  }
   handleFileUploaded(data) {
     this.setState({ data });
   }
@@ -68,13 +75,11 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-
         <CellVisualizer
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
         />
-
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -92,7 +97,11 @@ export class App extends Component {
   render() {
     return this.state.data ? (
       <Fragment>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
 
         <AutoComplete
           dataSource={this.state.data.nodes.map(d => d.id)}
@@ -113,10 +122,23 @@ export class App extends Component {
         {this.renderVisualization()}
       </Fragment>
     ) : (
-      <div>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
-
-        <h1>No data to render</h1>
+      <div
+        style={{
+          display: "grid",
+          justifyContent: "center",
+          alignContent: "center",
+          height: "60vh"
+        }}
+      >
+        <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
+          Cell Visualizer
+        </h1>
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
+        
       </div>
     );
   }
