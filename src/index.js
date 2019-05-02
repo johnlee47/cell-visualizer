@@ -1,13 +1,15 @@
 import React, { Component, Fragment } from "react";
+import { fetchGraphData } from "./utils";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
-import OrganelleDescription from "./OrganelleDescription";
 import FileUpload from "./FileUpload";
-import { Button, Input } from "antd";
+import OrganelleDescription from "./OrganelleDescription";
+import { Button, Input, Icon } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
+import { Upload } from "antd";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -33,6 +35,9 @@ const GroupMapping = [
   { group: 19, color: "#aa873c", component: "nucleus" }
 
 ];
+
+
+
 
 export class App extends Component {
   constructor(props) {
@@ -60,9 +65,11 @@ export class App extends Component {
   handleFileUploaded(data) {
     this.setState({ data });
   }
+
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
+
 
   renderVisualization() {
     const data = GroupMapping.map(m => {
@@ -84,11 +91,12 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
+
         <CellVisualizer
-          groupMapping={GroupMapping}
+          selectedNode={this.state.selectedNode}
+          groupMapping={GroupMapping} 
           data={this.state.data}
-          onNodeSelected={this.handleNodeSelected}
-        />
+          onNodeSelected={this.handleNodeSelected} />
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -102,6 +110,8 @@ export class App extends Component {
       </div>
     );
   }
+
+
 
   render() {
     return this.state.data ? (
@@ -131,25 +141,25 @@ export class App extends Component {
         {this.renderVisualization()}
       </Fragment>
     ) : (
-      <div
-        style={{
-          display: "grid",
-          justifyContent: "center",
-          alignContent: "center",
-          height: "60vh"
-        }}
-      >
-        <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
-          Cell Visualizer
+        <div
+          style={{
+            display: "grid",
+            justifyContent: "center",
+            alignContent: "center",
+            height: "60vh"
+          }}
+        >
+          <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
+            Cell Visualizer
         </h1>
-        <FileUpload
-          fileList={this.state.selectedFileList}
-          onFileUploaded={this.handleFileUploaded}
-          handleFileList={this.handleUploadedFileList}
-        />
-        
-      </div>
-    );
+          <FileUpload
+            fileList={this.state.selectedFileList}
+            onFileUploaded={this.handleFileUploaded}
+            handleFileList={this.handleUploadedFileList}
+          />
+
+        </div>
+      );
   }
 }
 
