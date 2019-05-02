@@ -1,4 +1,11 @@
 import React from "react";
+import { Upload, Button, Icon } from "antd";
+
+const dummyRequest = ({ file, onSuccess }) => {
+  setTimeout(() => {
+    onSuccess("ok");
+  }, 0);
+};
 
 export default class FileUpload extends React.Component {
   constructor(props) {
@@ -6,12 +13,32 @@ export default class FileUpload extends React.Component {
     this.state = {
       validFileType: true
     };
-    this.handleUpload = this.handleUpload.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
-  handleUpload(e) {
-    let files = e.target.files;
-    if (files[0].name.endsWith(".json")) {
+  handleChange(info) {
+    const nextState = {};
+    switch (info.file.status) {
+      case "uploading":
+        nextState.selectedFile = info.file;
+        nextState.selectedFileList = [info.file];
+        break;
+
+      case "done":
+        nextState.selectedFile = info.file;
+        nextState.selectedFileList = [info.file];
+        break;
+
+      default:
+        //error or removed
+        nextState.selectedFile = null;
+        nextState.selectedFileList = [];
+    }
+
+    this.props.handleFileList(nextState.selectedFile);
+
+    // Check for valid file type
+    if (this.props.fileList[0].name.endsWith(".json")) {
       this.setState({
         validFileType: true
       });
@@ -19,17 +46,22 @@ export default class FileUpload extends React.Component {
       this.setState({
         validFileType: false
       });
+      return;
     }
+
+    // Filereader which will read file contents
     let reader = new FileReader();
 
-    reader.onload = function(e) {
-      var text = reader.result;
-      // console.log(text);
+    // Waits for the file to finish loading and sets the data for the App
+    reader.addEventListener(
+      "loadend",
+      function() {
+        this.props.onFileUploaded(JSON.parse(reader.result));
+      }.bind(this)
+    );
 
-      this.props.onFileUploaded(JSON.parse(text));
-    }.bind(this);
-
-    reader.readAsText(files[0]);
+    // Passing the name of the file to the reader
+    reader.readAsText(this.props.fileList[0].originFileObj);
   }
 
   render() {
@@ -38,32 +70,51 @@ export default class FileUpload extends React.Component {
         style={{
           fontSize: 14,
           padding: 20,
-          marginLeft: 10,
           marginTop: 20,
           backgroundColor: "hsla(204, 3%, 98%, 1)",
           width: 260,
-          height: 100,
+          height: 120,
           display: "inline-block",
           borderRadius: 3,
           boxShadow: "0 1px 2px hsla(0, 0%, 0%, 0.3)"
         }}
       >
-        <input
+        <Upload
+          style={{
+            paddingLeft: 40
+          }}
           accept=".json"
-          onChange={e => this.handleUpload(e)}
-          type="file"
-          id="files"
-        />
+          customRequest={dummyRequest}
+          onChange={this.handleChange}
+          fileList={this.state.fileList}
+        >
+          <Button>
+            <Icon type="upload" /> Choose a File
+          </Button>
+        </Upload>
+        <p
+          style={{
+            color: "hsla(0, 0%, 25%, 1)",
+            paddingTop: 8,
+            marginBottom: 0,
+            textAlign: "center"
+          }}
+        >
+          {this.props.fileList[0] != undefined
+            ? this.props.fileList[0].name
+            : ""}
+        </p>
         {!this.state.validFileType && (
-          <span
+          <p
             style={{
               color: "red",
-              paddingTop: 12,
-              display: "inline-block"
+              paddingTop: 8,
+              marginBottom: 0,
+              textAlign: "center"
             }}
           >
             "The file format must be .json"
-          </span>
+          </p>
         )}
       </div>
     );
