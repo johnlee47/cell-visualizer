@@ -2,15 +2,12 @@ import React, { Component, Fragment } from "react";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
-
 import OrganelleDescription from "./OrganelleDescription";
 import FileUpload from "./FileUpload";
 import { Button, Input } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
-import OrganelleDescription from "./OrganelleDescription";
-
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -43,14 +40,23 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
+      selectedFile: null,
+      selectedFileList: []
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
+    this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
   }
 
   componentDidMount() { }
 
+  handleUploadedFileList(file) {
+    this.setState({
+      selectedFile: file,
+      selectedFileList: [file]
+    });
+  }
   handleFileUploaded(data) {
     this.setState({ data });
   }
@@ -78,13 +84,11 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-
         <CellVisualizer
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
         />
-
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -102,7 +106,11 @@ export class App extends Component {
   render() {
     return this.state.data ? (
       <Fragment>
-        <FileUpload onFileUploaded={this.handleFileUploaded} />
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
 
         <AutoComplete
           dataSource={this.state.data.nodes.map(d => d.id)}
@@ -123,12 +131,25 @@ export class App extends Component {
         {this.renderVisualization()}
       </Fragment>
     ) : (
-        <div>
-          <FileUpload onFileUploaded={this.handleFileUploaded} />
-
-          <h1>No data to render</h1>
-        </div>
-      );
+      <div
+        style={{
+          display: "grid",
+          justifyContent: "center",
+          alignContent: "center",
+          height: "60vh"
+        }}
+      >
+        <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
+          Cell Visualizer
+        </h1>
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
+        
+      </div>
+    );
   }
 }
 
