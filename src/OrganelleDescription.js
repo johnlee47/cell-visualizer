@@ -14,9 +14,9 @@ export default class OrganelleDescription extends React.Component {
         style={{
           position: "absolute",
           display: "flex",
-          height: 180,
           right: 0,
           top: 0,
+          paddingBottom: 15,
           paddingTop: 15,
           paddingRight: 15,
           paddingLeft: 25,
@@ -32,8 +32,8 @@ export default class OrganelleDescription extends React.Component {
         {selectedNode && (
           <div>
             <h3>{selectedNode.id}</h3>
-            <p>{selectedNode.group}</p>
-            <p>{selectedNode.group}</p>
+            <p>{selectedNode.description}</p>
+            <p>{selectedNode.description}</p>
             <div style={{ textAlign: "right" }}>
               <Button.Group>
                 <Button
