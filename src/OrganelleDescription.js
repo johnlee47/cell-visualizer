@@ -14,6 +14,7 @@ export default class OrganelleDescription extends React.Component {
         style={{
           position: "absolute",
           display: "flex",
+          height: "100vh",
           right: 0,
           top: 0,
           paddingBottom: 15,
