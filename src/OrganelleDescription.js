@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Input } from "antd";
+import { Button, Card, Typography} from "antd";
 
 export default class OrganelleDescription extends React.Component {
   constructor(props) {
@@ -10,34 +10,25 @@ export default class OrganelleDescription extends React.Component {
     const { selectedNode, onNodeSelected } = this.props;
 
     return (
-      <div
+        selectedNode && (
+                  <Card
+                  bordered={false}
         style={{
           position: "absolute",
-          display: "flex",
-          height: "100vh",
-          right: 0,
-          top: 0,
-          paddingBottom: 15,
-          paddingTop: 15,
-          paddingRight: 15,
-          paddingLeft: 25,
-          marginTop: 20,
-          marginLeft: 5,
-          flexDirection: "column",
-          width: 350,
-          backgroundColor: "hsla(204, 3%, 98%, 1)",
-          borderRadius: 3,
-          boxShadow: "0 1px 2px hsla(0, 0%, 0%, 0.3)"
+          width: 300,
+          right: 15,
+          top: 15,
+          backgroundColor: "#042044",
+          color: "white",
+          boxShadow: "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
         }}
       >
-        {selectedNode && (
-          <div>
-            <h3>{selectedNode.id}</h3>
-            <p>{selectedNode.description}</p>
-            <p>{selectedNode.description}</p>
+      
+            <Typography.Title style={{color:"white"}} level={4}>{selectedNode.id}</Typography.Title>
+            <Typography.Paragraph style={{color:"white"}}>{selectedNode.description}</Typography.Paragraph>
             <div style={{ textAlign: "right" }}>
               <Button.Group>
-                <Button
+                <Button ghost
                   type="default"
                   onClick={() => onNodeSelected(undefined)}
                 >
@@ -46,9 +37,8 @@ export default class OrganelleDescription extends React.Component {
                 <Button type="primary">Learn more</Button>
               </Button.Group>
             </div>
-          </div>
-        )}
-      </div>
+      </Card>
+        )
     );
   }
 }

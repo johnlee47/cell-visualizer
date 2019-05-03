@@ -69,35 +69,25 @@ export default class FileUpload extends React.Component {
       <div
         style={{
           fontSize: 14,
-          padding: 20,
-          marginTop: 20,
-          backgroundColor: "hsla(204, 3%, 98%, 1)",
-          width: 260,
-          height: 120,
-          display: "inline-block",
-          borderRadius: 3,
-          boxShadow: "0 1px 2px hsla(0, 0%, 0%, 0.3)"
+          zIndex: 1000
         }}
       >
         <Upload
           style={{
-            paddingLeft: 40
           }}
           accept=".json"
           customRequest={dummyRequest}
           onChange={this.handleChange}
           fileList={this.state.fileList}
         >
-          <Button>
+          <Button type="primary">
             <Icon type="upload" /> Choose a File
           </Button>
         </Upload>
         <p
           style={{
-            color: "hsla(0, 0%, 25%, 1)",
             paddingTop: 8,
-            marginBottom: 0,
-            textAlign: "center"
+            marginBottom: 0
           }}
         >
           {this.props.fileList[0] != undefined
@@ -109,8 +99,7 @@ export default class FileUpload extends React.Component {
             style={{
               color: "red",
               paddingTop: 8,
-              marginBottom: 0,
-              textAlign: "center"
+              marginBottom: 0
             }}
           >
             "The file format must be .json"
