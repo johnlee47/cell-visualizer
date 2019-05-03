@@ -110,27 +110,23 @@ export class App extends Component {
     return this.state.data ? (
       <Fragment>
         <div style={{ right: 15, bottom: 15, position: "absolute" }}>
-          <Button id="download" type="primary" icon="download" size={"large"}>
+          <Button id="download" icon="download" size={"large"}>
             Download
           </Button>
         </div>
 
-        <FileUpload
-          fileList={this.state.selectedFileList}
-          onFileUploaded={this.handleFileUploaded}
-          handleFileList={this.handleUploadedFileList}
-        />
         <div
           style={{
             width: "100vw",
             textAlign: "center",
             position: "absolute",
-            top: 15
+            top: -2,
           }}
         >
           <AutoComplete
+          size={"large"}
             dataSource={this.state.data.nodes.map(d => d.id)}
-            placeholder="input here"
+            placeholder="Input name here"
             style={{ width: 600 }}
             onSelect={selectedId => {
               this.handleNodeSelected(
@@ -142,7 +138,24 @@ export class App extends Component {
                 .toUpperCase()
                 .indexOf(inputValue.toUpperCase()) !== -1
             }
-          />
+          >
+          <Input suffix={<Icon type="search" className="certain-category-icon" />} />
+          </AutoComplete>
+        </div>
+        
+        <div style 
+        ={{
+
+          left: 15,
+          position: "absolute",
+          top: 15}}
+          >
+          
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
         </div>
         {this.renderVisualization()}
       </Fragment>

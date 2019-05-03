@@ -3,10 +3,11 @@ div.tooltip {
   text-align: center;
   padding: 10px;
   font-size: 14px;
-  background: #030816;
+  background: #042044;
   color: #fff;
   border: none;
   border-radius: 5px;
   pointer-events: none;
   opacity: 0.7;
 }
+
