@@ -9,7 +9,6 @@ import { Button, Input, Icon } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
-import { Upload } from "antd";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -33,11 +32,7 @@ const GroupMapping = [
   { group: 18, color: "#4ecbb1", component: "lysosome" },
   { group: 19, color: "#aa873c", component: "vacuole" },
   { group: 19, color: "#aa873c", component: "nucleus" }
-
 ];
-
-
-
 
 export class App extends Component {
   constructor(props) {
@@ -46,7 +41,8 @@ export class App extends Component {
       data: undefined,
       selectedNode: undefined,
       selectedFile: null,
-      selectedFileList: []
+      selectedFileList: [],
+      size: "large"
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
@@ -54,7 +50,7 @@ export class App extends Component {
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
   }
 
-  componentDidMount() { }
+  componentDidMount() {}
 
   handleUploadedFileList(file) {
     this.setState({
@@ -69,7 +65,6 @@ export class App extends Component {
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
-
 
   renderVisualization() {
     const data = GroupMapping.map(m => {
@@ -91,12 +86,12 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-
         <CellVisualizer
           selectedNode={this.state.selectedNode}
-          groupMapping={GroupMapping} 
+          groupMapping={GroupMapping}
           data={this.state.data}
-          onNodeSelected={this.handleNodeSelected} />
+          onNodeSelected={this.handleNodeSelected}
+        />
 
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -111,55 +106,65 @@ export class App extends Component {
     );
   }
 
-
-
   render() {
     return this.state.data ? (
       <Fragment>
+        <div style={{ right: 15, bottom: 15, position: "absolute" }}>
+          <Button id="download" type="primary" icon="download" size={"large"}>
+            Download
+          </Button>
+        </div>
+
         <FileUpload
           fileList={this.state.selectedFileList}
           onFileUploaded={this.handleFileUploaded}
           handleFileList={this.handleUploadedFileList}
         />
-
-        <AutoComplete
-          dataSource={this.state.data.nodes.map(d => d.id)}
-          placeholder="input here"
-          className="custom"
-          style={{ top: 15, left: 600, width: 600, display: "inline-block" }}
-          onSelect={selectedId => {
-            this.handleNodeSelected(
-              this.state.data.nodes.find(n => n.id === selectedId)
-            );
+        <div
+          style={{
+            width: "100vw",
+            textAlign: "center",
+            position: "absolute",
+            top: 15
           }}
-          filterOption={(inputValue, option) =>
-            option.props.children
-              .toUpperCase()
-              .indexOf(inputValue.toUpperCase()) !== -1
-          }
-        />
+        >
+          <AutoComplete
+            dataSource={this.state.data.nodes.map(d => d.id)}
+            placeholder="input here"
+            style={{ width: 600 }}
+            onSelect={selectedId => {
+              this.handleNodeSelected(
+                this.state.data.nodes.find(n => n.id === selectedId)
+              );
+            }}
+            filterOption={(inputValue, option) =>
+              option.props.children
+                .toUpperCase()
+                .indexOf(inputValue.toUpperCase()) !== -1
+            }
+          />
+        </div>
         {this.renderVisualization()}
       </Fragment>
     ) : (
-        <div
-          style={{
-            display: "grid",
-            justifyContent: "center",
-            alignContent: "center",
-            height: "60vh"
-          }}
-        >
-          <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
-            Cell Visualizer
+      <div
+        style={{
+          display: "grid",
+          justifyContent: "center",
+          alignContent: "center",
+          height: "60vh"
+        }}
+      >
+        <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
+          Cell Visualizer
         </h1>
-          <FileUpload
-            fileList={this.state.selectedFileList}
-            onFileUploaded={this.handleFileUploaded}
-            handleFileList={this.handleUploadedFileList}
-          />
-
-        </div>
-      );
+        <FileUpload
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
+      </div>
+    );
   }
 }
 
