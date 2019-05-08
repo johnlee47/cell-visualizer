@@ -11,3 +11,16 @@ div.tooltip {
   opacity: 0.7;
 }
 
+.ant-upload.ant-upload-drag {
+  border: none;
+  border-radius: 1000px;
+  padding: 5px 10px;
+  background: #042044;
+  color: #fff;
+}
+
+.ant-upload,
+.ant-upload-drag-container,
+.ant-upload-drag-container .ant-typography {
+  color: #fff;
+}

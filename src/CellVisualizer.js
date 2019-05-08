@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import saveSvgAsPng from "./Download";
 import { Spin } from "antd";
 const d3 = require("d3");
+import * as bg from "./cell_bg.svg";
 
 const width = window.innerWidth - 200;
 const height = window.innerHeight - 200;
@@ -562,7 +563,16 @@ export default class CellVisualizer extends Component {
             <Spin size="large" tip="Preparing visualization ..." />
           </div>
         )}
-        <div id="svg_wrapper" />
+        <div
+          id="svg_wrapper"
+          style={{
+            display: "grid",
+            justifyContent: "center",
+            alignContent: "center",
+            height: "100vh",
+            background: `url(${bg})`
+          }}
+        />
       </React.Fragment>
     );
   }

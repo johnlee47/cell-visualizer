@@ -73,21 +73,30 @@ export default class FileUpload extends React.Component {
         }}
       >
         <Upload.Dragger
-          style={{ padding: 15, textAlign: "center" }}
+          style={{
+            padding: 5,
+            textAlign: "center"
+          }}
           accept=".json"
           customRequest={dummyRequest}
           onChange={this.handleChange}
           fileList={this.state.fileList}
         >
-          <p className="ant-upload-drag-icon">
-            <Icon type="inbox" />
-          </p>
-          {this.props.title && (
-            <p className="ant-upload-text">{this.props.title}</p>
+          <Icon
+            type="cloud-upload"
+            style={{ marginRight: 15, fontSize: "1.5rem" }}
+          />
+
+          {this.props.fileList[0] != undefined ? (
+            <Typography.Text strong>
+              {this.props.fileList[0].name}
+            </Typography.Text>
+          ) : (
+            this.props.title && (
+              <Typography.Text strong>{this.props.title}</Typography.Text>
+            )
           )}
-          {this.props.hint && (
-            <p className="ant-upload-hint">{this.props.hint}</p>
-          )}
+          {}
         </Upload.Dragger>
         <p
           style={{
@@ -95,15 +104,7 @@ export default class FileUpload extends React.Component {
             marginBottom: 0,
             textAlign: "center"
           }}
-        >
-          {this.props.fileList[0] != undefined ? (
-            <Typography.Text strong>
-              <Icon type="paper-clip" /> {this.props.fileList[0].name}
-            </Typography.Text>
-          ) : (
-            ""
-          )}
-        </p>
+        />
         {!this.state.validFileType && (
           <p
             style={{

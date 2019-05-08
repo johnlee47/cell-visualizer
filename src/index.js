@@ -9,6 +9,7 @@ import { Button, Input, Icon, Typography, Upload } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
+import * as bg from "./home.svg";
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -132,7 +133,6 @@ export class App extends Component {
           }}
         >
           <AutoComplete
-            size={"large"}
             dataSource={this.state.data.nodes.map(d => d.id)}
             placeholder="Search ..."
             style={{
@@ -175,13 +175,19 @@ export class App extends Component {
     ) : (
       <div
         style={{
-          display: "grid",
+          display: "flex",
           justifyContent: "center",
-          alignContent: "center",
-          height: "60vh"
+          alignItems: "center",
+          flexDirection: "column",
+          height: "100vh",
+          background: `url(${bg})`,
+          paddingBottom: 90
         }}
       >
-        <Typography.Title level={1} style={{ textAlign: "center" }}>
+        <Typography.Title
+          level={1}
+          style={{ textAlign: "center", fontSize: "2.8rem" }}
+        >
           Cell Visualizer
         </Typography.Title>
 
