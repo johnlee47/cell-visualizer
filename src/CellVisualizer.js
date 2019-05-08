@@ -232,10 +232,14 @@ export default class CellVisualizer extends Component {
 
     d3.select("#download").on("click", function() {
       // Get the d3js SVG element and save using saveSvgAsPng.js
-      saveSvgAsPng.saveSvgAsPng(document.getElementById("SVGRoot"), "Plot.png", {
-        scale: 2,
-        backgroundColor: "#FFFFFF"
-      });
+      saveSvgAsPng.saveSvgAsPng(
+        document.getElementById("SVGRoot"),
+        "Plot.png",
+        {
+          scale: 2,
+          backgroundColor: "#FFFFFF"
+        }
+      );
     });
 
     this.simulation.on("tick", this.onTick.bind(this));
@@ -271,8 +275,15 @@ export default class CellVisualizer extends Component {
 
     this.node.each(function(d) {
       const result = calculateNewPosition(d);
+
+      // Use character length to determine hover information
       let characterLength =
-        result.x.toFixed(2).length * 12 + result.y.toFixed(2).length * 12;
+        (d.id.length < 6
+          ? d.id.length + 2
+          : d.id.length > 12
+          ? d.id.length - 2
+          : d.id.length) * 12;
+
       d3.select(this)
         .attr("cx", result.x)
         .attr("fixed", false)
@@ -305,7 +316,7 @@ export default class CellVisualizer extends Component {
 
           d3.select(this.parentNode.parentNode) // This lets this component be drawn on top of other comoponents
             .append("rect")
-            .style("fill", "#042044")
+            .style("fill", "hsla(214, 89%, 14%, .7)")
             .attr("x", function() {
               // Adjust the center of the rectangle
               return result.x - characterLength / 2;
@@ -326,15 +337,15 @@ export default class CellVisualizer extends Component {
             //.style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
             .style("font-size", "16px")
             .style("font-weight", "600")
-            .style("fill","white")
+            .style("fill", "white")
             .attr("x", result.x) // set x position of left side of text
             .attr("y", result.y) // set y position of bottom of text
             .attr("dy", "-20") // set offset y position
             .attr("text-anchor", "middle") // set anchor y justification
             .attr("id", "node" + i)
-            .text(d.id)
-              //return [result.x.toFixed(2), result.y.toFixed(2)];
-           // });
+            .text(d.id);
+          //return [result.x.toFixed(2), result.y.toFixed(2)];
+          // });
         })
         .on("mouseout", function(d, i) {
           d3.selectAll("#node" + i).remove(); // Removes the on-hover information
