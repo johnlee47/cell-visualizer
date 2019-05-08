@@ -5,7 +5,7 @@ import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
 import FileUpload from "./FileUpload";
 import OrganelleDescription from "./OrganelleDescription";
-import { Button, Input, Icon } from "antd";
+import { Button, Input, Icon, Typography, Upload } from "antd";
 import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
@@ -110,9 +110,17 @@ export class App extends Component {
     return this.state.data ? (
       <Fragment>
         <div style={{ right: 15, bottom: 15, position: "absolute" }}>
-          <Button id="download" icon="download" size={"large"}>
-            Download
-          </Button>
+          <Button
+            id="download"
+            icon="download"
+            size={"large"}
+            shape="circle"
+            type="primary"
+            style={{
+              boxShadow:
+                "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
+            }}
+          />
         </div>
 
         <div
@@ -120,14 +128,16 @@ export class App extends Component {
             width: "100vw",
             textAlign: "center",
             position: "absolute",
-            top: -2,
+            top: 15
           }}
         >
           <AutoComplete
-          size={"large"}
+            size={"large"}
             dataSource={this.state.data.nodes.map(d => d.id)}
-            placeholder="Input name here"
-            style={{ width: 600 }}
+            placeholder="Search ..."
+            style={{
+              width: 600
+            }}
             onSelect={selectedId => {
               this.handleNodeSelected(
                 this.state.data.nodes.find(n => n.id === selectedId)
@@ -139,23 +149,26 @@ export class App extends Component {
                 .indexOf(inputValue.toUpperCase()) !== -1
             }
           >
-          <Input suffix={<Icon type="search" className="certain-category-icon" />} />
+            <Input
+              suffix={<Icon type="search" className="certain-category-icon" />}
+            />
           </AutoComplete>
         </div>
-        
-        <div style 
-        ={{
 
-          left: 15,
-          position: "absolute",
-          top: 15}}
-          >
-          
-        <FileUpload
-          fileList={this.state.selectedFileList}
-          onFileUploaded={this.handleFileUploaded}
-          handleFileList={this.handleUploadedFileList}
-        />
+        <div
+          style={{
+            left: 15,
+            position: "absolute",
+            top: 15
+          }}
+        >
+          <FileUpload
+            title="Change graph"
+            hint="Select another graph file"
+            fileList={this.state.selectedFileList}
+            onFileUploaded={this.handleFileUploaded}
+            handleFileList={this.handleUploadedFileList}
+          />
         </div>
         {this.renderVisualization()}
       </Fragment>
@@ -168,10 +181,13 @@ export class App extends Component {
           height: "60vh"
         }}
       >
-        <h1 style={{ textAlign: "center", color: "hsla(0, 0%, 25%, 1)" }}>
+        <Typography.Title level={1} style={{ textAlign: "center" }}>
           Cell Visualizer
-        </h1>
+        </Typography.Title>
+
         <FileUpload
+          title="Click or drag graph file to this area"
+          hint="Upload a graph JSON file to view it in the cell visualizer."
           fileList={this.state.selectedFileList}
           onFileUploaded={this.handleFileUploaded}
           handleFileList={this.handleUploadedFileList}
