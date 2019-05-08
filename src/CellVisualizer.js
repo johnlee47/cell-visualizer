@@ -1,40 +1,52 @@
 import React, { Component } from "react";
-import { func } from "prop-types";
 import saveSvgAsPng from "./Download";
-
+import { Spin } from "antd";
 const d3 = require("d3");
 
+const width = window.innerWidth - 200;
+const height = window.innerHeight - 200;
+const plasmaMembraneWidth = 40;
+const cellWallWidth = 40;
+var gnodes = undefined;
+const defaultGroupNoSet = [0, 1, 6, 9];
+const organellRadius = 60;
 // Radius of nodes
 const radius = 5;
 // Padding between nodes and cellular components that should not crossover
-const padding = 2 * radius;
-
+const padding = 5;
 // Calculate and return the distance between two points
 const calculateDistance = (x1, y1, x2, y2) =>
   Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 
 // Constraint the cell inside a cell component, optionally constrained not to enter some components
-const constraintInsideCell = (x, y, component, components = []) => {
+const constraintInsideCell = (
+  x,
+  y,
+  component,
+  components = [],
+  nodeRadius = 0
+) => {
+  const nodePadding = nodeRadius ? nodeRadius + 10 : padding;
   const { cx, cy, rmax, rmin } = component;
   let R = calculateDistance(x, y, cx, cy);
-  if (R > rmax - padding) {
+  if (R > rmax - nodePadding) {
     return {
-      x: ((rmax - padding) / R) * (x - cx) + cx,
-      y: ((rmax - padding) / R) * (y - cy) + cy
+      x: ((rmax - nodePadding) / R) * (x - cx) + cx,
+      y: ((rmax - nodePadding) / R) * (y - cy) + cy
     };
-  } else if (R < rmin + padding) {
+  } else if (R < rmin + nodePadding) {
     return {
-      x: ((rmin + padding) / R) * (x - cx) + cx,
-      y: ((rmin + padding) / R) * (y - cy) + cy
+      x: ((rmin + nodePadding) / R) * (x - cx) + cx,
+      y: ((rmin + nodePadding) / R) * (y - cy) + cy
     };
   } else {
     for (let i = 0; i < components.length; i++) {
       const { cx, cy, rmax } = components[i];
       R = calculateDistance(x, y, cx, cy);
-      if (R < rmax + padding) {
+      if (R < rmax + nodePadding) {
         const position = {
-          x: ((rmax + padding) / R) * (x - cx) + cx,
-          y: ((rmax + padding) / R) * (y - cy) + cy
+          x: ((rmax + nodePadding) / R) * (x - cx) + cx,
+          y: ((rmax + nodePadding) / R) * (y - cy) + cy
         };
         return position;
       }
@@ -55,11 +67,9 @@ const constraintOutsideCell = (x, y, cell) => {
     };
   }
   // Do not let the node out of the viewport
-  let w = 1000,
-    h = 900;
   return {
-    x: x < padding ? padding : x > w - padding ? w - padding : x,
-    y: y < padding ? padding : y > h - padding ? h - padding : y
+    x: x < padding ? padding : x > width - padding ? width - padding : x,
+    y: y < padding ? padding : y > height - padding ? height - padding : y
   };
 };
 
@@ -67,17 +77,20 @@ export default class CellVisualizer extends Component {
   constructor(props) {
     super(props);
     this.simulation = undefined;
+    this.organnelSimulation = undefined;
     this.svg = undefined;
     this.node = undefined;
     this.link = undefined;
     this.cell = {};
+    this.state = {
+      busy: false
+    };
   }
 
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
     } else if (this.props.data) {
-      this.resetGraph();
-      this.initGraph();
+      this.initCellStructure();
     }
 
     if (
@@ -90,13 +103,13 @@ export default class CellVisualizer extends Component {
         .duration(200)
         .attr("r", 15);
     }
-    if (!this.props.selectedNode) {
+    if (!this.props.selectedNode && this.node) {
       this.node.attr("r", radius - 0.75);
     }
   }
 
   componentDidMount() {
-    this.initCellStructure().then(() => this.props.data && this.initGraph());
+    this.initCellStructure();
   }
 
   parseTranslateValues(translate) {
@@ -107,84 +120,203 @@ export default class CellVisualizer extends Component {
       .map(v => +v);
   }
 
-  initCellStructure() {
-    return d3.xml("./cell.svg").then(data => {
-      d3.select("#svg_wrapper")
-        .node()
-        .appendChild(data.documentElement);
-      this.svg = d3.select("#svg_wrapper").select("svg");
-      this.svg.attr("width", 1000);
-      // Get the offset value of the whole diagram
-      let cellTranslate = this.parseTranslateValues(
-        d3
-          .select("#cell_group")
-          .node()
-          .getAttribute("transform")
-      );
-
-      d3.selectAll(".group_component")
-        .nodes()
-        .map(groupComponent => {
-          // Get the offset value of each cellular component
-          var groupTranslate = groupComponent.getAttribute("transform");
-          groupTranslate = groupTranslate
-            ? this.parseTranslateValues(groupTranslate)
-            : [0, 0];
-
-          const componentName = groupComponent.id.replace("_group", "");
-          const component = d3.select("#" + componentName).node();
-          // Calculate the center of cellular components
-          var cx =
-            +component.getAttribute("cx") +
-            groupTranslate[0] +
-            cellTranslate[0];
-          var cy =
-            +component.getAttribute("cy") +
-            groupTranslate[1] +
-            cellTranslate[1];
-          // Save cellular components
-          this.cell[componentName] = {
-            cx: cx,
-            cy: cy,
-            rmax: +component.getAttribute("r"),
-            rmin: 0
-          };
-        });
-      // Save minimum radius for memebrane like cellular components
-      this.cell["plasma_membrane"].rmin =
-        this.cell["cytoplasm"].rmax + 0.6 * padding;
-      if (this.cell["cell_wall"]) {
-        this.cell["cell_wall"].rmin =
-          this.cell["plasma_membrane"].rmax + 0.6 * padding;
-      }
-    });
+  identifyComponent(groupNo) {
+    return this.props.groupMapping[groupNo].component;
   }
 
-  resetGraph() {
-    d3.selectAll(".node").each(function() {
-      this.parentNode.remove();
-    });
-    d3.selectAll(".edge").each(function() {
-      this.parentNode.remove();
-    });
+  initCellStructure() {
+    this.setState({ busy: true });
+    this.simulation && this.simulation.stop();
+    this.organnelSimulation && this.organnelSimulation.stop();
+    this.cell = {};
+    d3.selectAll("#svg").remove();
+    this.svg = d3
+      .select("#svg_wrapper")
+      .append("svg")
+      .attr("id", "svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    this.cell["cell_wall"] = {
+      cx: width / 2,
+      cy: height / 2,
+      rmax: height / 2 - 10,
+      rmin: height / 2 - 10 - cellWallWidth
+    };
+
+    this.cell["plasma_membrane"] = {
+      cx: width / 2,
+      cy: height / 2,
+      rmax: this.cell["cell_wall"].rmin,
+      rmin: this.cell["cell_wall"].rmin - plasmaMembraneWidth
+    };
+
+    this.cell["cytoplasm"] = {
+      cx: width / 2,
+      cy: height / 2,
+      rmax: this.cell["plasma_membrane"].rmin,
+      rmin: 0
+    };
+
+    const groupNoSet = new Set(defaultGroupNoSet);
+    const uniqueNodes = this.props.data.nodes.filter(
+      function(obj) {
+        if (!groupNoSet.has(obj.group)) {
+          groupNoSet.add(obj.group);
+          this.cell[this.identifyComponent(obj.group)] = {
+            cx: width / 2,
+            cy: height / 2,
+            rmax: organellRadius,
+            rmin: 0
+          };
+          return obj;
+        }
+      }.bind(this)
+    );
+
+    var cellWall = this.svg
+      .append("g")
+      .attr("class", "group_component")
+      .attr("id", "cell_wall_group")
+      .append("circle")
+      .attr("stroke", "#888DDB")
+      .attr("fill", "#EDECFC")
+      .attr("stroke-width", 1)
+      .attr("id", "cell_wall")
+      .attr("r", this.cell["cell_wall"].rmax)
+      .attr("cx", this.cell["cell_wall"].cx)
+      .attr("cy", this.cell["cell_wall"].cy);
+
+    var plasmaMembrane = this.svg
+      .append("g")
+      .attr("class", "group_component")
+      .attr("id", "plasma_membrane_group")
+      .append("circle")
+      .attr("stroke", "#888DDB")
+      .attr("fill", "#f1f4f1")
+      .attr("stroke-width", 1)
+      .attr("id", "plasma_membrane")
+      .attr("r", this.cell["plasma_membrane"].rmax)
+      .attr("cx", this.cell["plasma_membrane"].cx)
+      .attr("cy", this.cell["plasma_membrane"].cy);
+
+    var cytoplasm = this.svg
+      .append("g")
+      .attr("class", "group_component")
+      .attr("id", "cytoplasm_group")
+      .append("circle")
+      .attr("stroke", "#7e9a82")
+      .attr("fill", "#FFF")
+      .attr("stroke-width", 1)
+      .attr("id", "cytoplasm")
+      .attr("r", this.cell["cytoplasm"].rmax)
+      .attr("cx", this.cell["cytoplasm"].cx)
+      .attr("cy", this.cell["cytoplasm"].cy);
+
+    gnodes = this.svg
+      .selectAll("g.gnode")
+      .data(uniqueNodes)
+      .enter()
+      .append("g")
+      .attr("class", "group_component")
+      .attr(
+        "id",
+        function(d) {
+          return this.identifyComponent(d.group) + "_group";
+        }.bind(this)
+      );
+
+    gnodes
+      .append("svg:title")
+      .text(
+        d => this.props.groupMapping.find(m => m.group === d.group).component
+      );
+
+    const node = gnodes
+      .append("circle")
+      .attr("stroke", "#d29be3")
+      .attr("fill", "#f6ebf9")
+      .attr("stroke-width", 1)
+      .attr(
+        "id",
+        function(d) {
+          return this.identifyComponent(d.group);
+        }.bind(this)
+      )
+      .attr("r", organellRadius)
+      .attr("class", "node");
+
+    gnodes
+      .append("text")
+      .style("fill", "#74278c")
+      .style("font-size", "0.7rem")
+      .attr("text-anchor", "middle")
+      .attr("y", 30)
+      .text(
+        d => this.props.groupMapping.find(m => m.group === d.group).component
+      );
+
+    this.organnelSimulation = d3
+      .forceSimulation(uniqueNodes)
+      .force("repel", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force(
+        "collision",
+        d3.forceCollide().radius(function(d) {
+          return organellRadius + 30;
+        })
+      );
+    this.organnelSimulation
+      .on(
+        "tick",
+        function() {
+          const cell = this.cell;
+          const cytoplasm = cell["cytoplasm"];
+          const groupMapping = this.props.groupMapping;
+          gnodes.each(function(d) {
+            const result = constraintInsideCell(
+              d.x,
+              d.y,
+              cytoplasm,
+              [],
+              organellRadius
+            );
+
+            d3.select(this).attr("transform", function(d, i) {
+              return "translate(" + result.x + "," + result.y + ")";
+            });
+            // d3.select(this)
+            //   .attr()
+            //   .attr("cx", result.x)
+            //   .attr("fixed", false)
+            //   .attr("cy", result.y);
+            cell[groupMapping.find(m => m.group === d.group).component].cx =
+              result.x;
+            cell[groupMapping.find(m => m.group === d.group).component].cy =
+              result.y;
+          });
+        }.bind(this)
+      )
+      .on(
+        "end",
+        function() {
+          console.log("End");
+          this.setState({ busy: false });
+          this.props.data && this.initGraph();
+        }.bind(this)
+      );
   }
 
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
-      .force(
-        "link",
-        d3
-          .forceLink(this.props.data.links)
-          .id(d => d.id)
-          .distance(70)
-      )
-      .force("charge", d3.forceManyBody())
-      .force("center", d3.forceCenter(400, 450))
+      .force("repel", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("link", d3.forceLink(this.props.data.links).id(d => d.id))
       .force(
         "collision",
         d3.forceCollide().radius(function(d) {
-          return 10;
+          return radius;
         })
       );
 
@@ -221,7 +353,6 @@ export default class CellVisualizer extends Component {
         const mapping = this.props.groupMapping.find(m => m.group === d.group);
         return mapping ? mapping.color : "#333";
       })
-
       .on(
         "click",
         function(d, i) {
@@ -232,10 +363,14 @@ export default class CellVisualizer extends Component {
 
     d3.select("#download").on("click", function() {
       // Get the d3js SVG element and save using saveSvgAsPng.js
-      saveSvgAsPng.saveSvgAsPng(document.getElementById("SVGRoot"), "Plot.png", {
-        scale: 2,
-        backgroundColor: "#FFFFFF"
-      });
+      saveSvgAsPng.saveSvgAsPng(
+        document.getElementById("SVGRoot"),
+        "Plot.png",
+        {
+          scale: 2,
+          backgroundColor: "#FFFFFF"
+        }
+      );
     });
 
     this.simulation.on("tick", this.onTick.bind(this));
@@ -326,15 +461,15 @@ export default class CellVisualizer extends Component {
             //.style("fill", "hsla(204, 94%, 9%, 1)") // fill the text with the colour black
             .style("font-size", "16px")
             .style("font-weight", "600")
-            .style("fill","white")
+            .style("fill", "white")
             .attr("x", result.x) // set x position of left side of text
             .attr("y", result.y) // set y position of bottom of text
             .attr("dy", "-20") // set offset y position
             .attr("text-anchor", "middle") // set anchor y justification
             .attr("id", "node" + i)
-            .text(d.id)
-              //return [result.x.toFixed(2), result.y.toFixed(2)];
-           // });
+            .text(d.id);
+          //return [result.x.toFixed(2), result.y.toFixed(2)];
+          // });
         })
         .on("mouseout", function(d, i) {
           d3.selectAll("#node" + i).remove(); // Removes the on-hover information
@@ -403,6 +538,25 @@ export default class CellVisualizer extends Component {
   }
 
   render() {
-    return <div id="svg_wrapper" />;
+    return (
+      <React.Fragment>
+        {this.state.busy && (
+          <div
+            style={{
+              position: "absolute",
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(255,255,255,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center"
+            }}
+          >
+            <Spin size="large" tip="Preparing visualization ..." />
+          </div>
+        )}
+        <div id="svg_wrapper" />
+      </React.Fragment>
+    );
   }
 }

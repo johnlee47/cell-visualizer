@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Button, Icon } from "antd";
+import { Upload, Button, Icon, Typography } from "antd";
 
 const dummyRequest = ({ file, onSuccess }) => {
   setTimeout(() => {
@@ -72,27 +72,37 @@ export default class FileUpload extends React.Component {
           zIndex: 1000
         }}
       >
-        <Upload
-          style={{
-          }}
+        <Upload.Dragger
+          style={{ padding: 15, textAlign: "center" }}
           accept=".json"
           customRequest={dummyRequest}
           onChange={this.handleChange}
           fileList={this.state.fileList}
         >
-          <Button type="primary">
-            <Icon type="upload" /> Choose a File
-          </Button>
-        </Upload>
+          <p className="ant-upload-drag-icon">
+            <Icon type="inbox" />
+          </p>
+          {this.props.title && (
+            <p className="ant-upload-text">{this.props.title}</p>
+          )}
+          {this.props.hint && (
+            <p className="ant-upload-hint">{this.props.hint}</p>
+          )}
+        </Upload.Dragger>
         <p
           style={{
             paddingTop: 8,
-            marginBottom: 0
+            marginBottom: 0,
+            textAlign: "center"
           }}
         >
-          {this.props.fileList[0] != undefined
-            ? this.props.fileList[0].name
-            : ""}
+          {this.props.fileList[0] != undefined ? (
+            <Typography.Text strong>
+              <Icon type="paper-clip" /> {this.props.fileList[0].name}
+            </Typography.Text>
+          ) : (
+            ""
+          )}
         </p>
         {!this.state.validFileType && (
           <p
