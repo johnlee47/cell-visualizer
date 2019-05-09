@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Button, Icon } from "antd";
+import { Upload, Button, Icon, Typography } from "antd";
 
 const dummyRequest = ({ file, onSuccess }) => {
   setTimeout(() => {
@@ -72,28 +72,39 @@ export default class FileUpload extends React.Component {
           zIndex: 1000
         }}
       >
-        <Upload
+        <Upload.Dragger
           style={{
+            padding: 5,
+            textAlign: "center"
           }}
           accept=".json"
           customRequest={dummyRequest}
           onChange={this.handleChange}
           fileList={this.state.fileList}
         >
-          <Button type="primary">
-            <Icon type="upload" /> Choose a File
-          </Button>
-        </Upload>
+          <Icon
+            type="cloud-upload"
+            style={{ marginRight: 15, fontSize: "1.5rem" }}
+          />
+
+          {this.props.fileList[0] != undefined ? (
+            <Typography.Text strong>
+              {this.props.fileList[0].name}
+            </Typography.Text>
+          ) : (
+            this.props.title && (
+              <Typography.Text strong>{this.props.title}</Typography.Text>
+            )
+          )}
+          {}
+        </Upload.Dragger>
         <p
           style={{
             paddingTop: 8,
-            marginBottom: 0
+            marginBottom: 0,
+            textAlign: "center"
           }}
-        >
-          {this.props.fileList[0] != undefined
-            ? this.props.fileList[0].name
-            : ""}
-        </p>
+        />
         {!this.state.validFileType && (
           <p
             style={{
