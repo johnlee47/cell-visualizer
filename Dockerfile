@@ -8,9 +8,5 @@ COPY . ./
 
 RUN npm install
 RUN npm run-script build
-
-#production environment
-FROM nginx:alpine
-COPY --from=builder /root/react/build /usr/share/nginx/html
-EXPOSE 4400 
-CMD ["nginx", "-g", "daemon off;"]
+RUN npm install pm2 -g
+CMD ["pm2-runtime", "app.js"]
