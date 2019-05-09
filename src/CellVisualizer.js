@@ -366,7 +366,7 @@ export default class CellVisualizer extends Component {
       // Get the d3js SVG element and save using saveSvgAsPng.js
       saveSvgAsPng.saveSvgAsPng(
         document.getElementById("svg"),
-        "Plot.png",
+        "Cell View.png",
         {
           scale: 2,
           backgroundColor: "#FFFFFF"
