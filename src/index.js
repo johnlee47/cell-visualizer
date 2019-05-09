@@ -110,8 +110,7 @@ export class App extends Component {
     return this.state.data ? (
       <Fragment>
         <div style={{ right: 15, bottom: 15, position: "absolute" }}>
-          <Button id="download" icon="download" size={"large"}>
-            Download
+          <Button id="download" icon="download" shape ="circle" size={"large"}>
           </Button>
         </div>
 
