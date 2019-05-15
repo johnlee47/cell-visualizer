@@ -3,6 +3,23 @@ import saveSvgAsPng from "./Download";
 import { Spin } from "antd";
 const d3 = require("d3");
 import * as bg from "./cell_bg.svg";
+import { get } from "http";
+
+const colorPalletes = ["#f7bac9", "#f28ca5", "#ed5e81", "#c6ecca", "#9fdfa7", "#79d284", "#fff5b3", "#ffee80", "#ffe84d", "#c0caf2",
+  "#95a7e9", "#6b84e0", "#fbd3b6", "#f9b585", "#f79855", "#e7bdf4", "#d892ed", "#c866e5", "#b7effb", "#87e4f8", "#56d9f5", "#fab8f6", "#f688f1",
+  "#f359eb", "#e7f9b9", "#d7f58a", "#c6f15b", "#fab8b8", "#f68989", "#f25959", "#cbe7e4", "#a8d7d2", "#85c7c0", "#e2b3ff", "#ce80ff", "#ba4dff",
+  "#e1b3ff", "#ce80ff", "#ba4dff", "3fff8b3", "#fff380", "#ffef4d", "#ffb3b3", "#ff8080", "#ff4d4d", "#b3ffc9", "#80ffa5", "#4dff81", "#ffffb3",
+  "#ffff80", "#ffff4d", "#ffd9b3", "#ffbf80", "#ffa64d", "#b3b3ff", "#8080ff", "#4d4dff", "#d9d9d9", "#bfbfbf", "#a6a6a6"]
+
+var colorMapper = {};
+
+var colorNo = 0;
+
+// function getColor(d = 1) {
+//   colorNo = (colorNo + d) % colorPalletes.length;
+//   return colorPalletes[colorNo - d];
+// }
+
 
 const width = window.innerWidth - 200;
 const height = window.innerHeight - 200;
@@ -119,10 +136,6 @@ export default class CellVisualizer extends Component {
       .replace(")", "")
       .split(",")
       .map(v => +v);
-  }
-
-  identifyComponent(groupNo) {
-    return this.props.groupMapping[groupNo].component;
   }
 
   initCellStructure() {
@@ -248,6 +261,7 @@ export default class CellVisualizer extends Component {
           .append("circle")
           .style('fill', '#f6ebf9')
           .attr("id", m.membrane)
+          .attr("class", "membrane")
           .attr("r", organellRadius + 15);
         visualiser.cell[m.membrane] = {
           cx: visualiser.cell[d.location].cx,
@@ -259,8 +273,6 @@ export default class CellVisualizer extends Component {
 
 
     })
-
-    console.log('cell', this.cell);
 
     const node = gnodes
       .append("circle")
@@ -286,6 +298,7 @@ export default class CellVisualizer extends Component {
         d => d.location
       );
 
+
     this.organnelSimulation = d3
       .forceSimulation(uniqueNodes)
       .force("repel", d3.forceManyBody())
@@ -303,7 +316,6 @@ export default class CellVisualizer extends Component {
           const cell = this.cell;
           const cytoplasm = cell["cytoplasm"];
           const groupMapping = this.props.groupMapping;
-          console.log('CELL', visualiser.cell)
           gnodes.each(function (d) {
             const result = constraintInsideCell(
               d.x,
@@ -369,6 +381,13 @@ export default class CellVisualizer extends Component {
         return d.id;
       });
 
+    this.props.data.nodes.map(function (obj) {
+      if (!colorMapper.hasOwnProperty(obj.location)) {
+        colorMapper[obj.location] = colorPalletes[colorNo];
+        colorNo += 1;
+      }
+    })
+
     var gnodes = this.svg
       .selectAll("g.gnode")
       .data(this.props.data.nodes)
@@ -378,6 +397,8 @@ export default class CellVisualizer extends Component {
         return d.id + "_g";
       });
 
+    console.log(colorMapper);
+
     this.node = gnodes
       .append("circle")
       .attr("stroke", "#fff")
@@ -385,7 +406,7 @@ export default class CellVisualizer extends Component {
       .attr("id", d => d.id)
       .attr("r", radius - 0.75)
       .attr("class", "node")
-      .attr("fill", "#000")
+      .attr("fill", d => colorMapper[d.location])
       .on(
         "click",
         function (d, i) {
