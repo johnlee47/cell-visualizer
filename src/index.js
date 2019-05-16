@@ -56,6 +56,7 @@ export class App extends Component {
 
   handleDownloadPdf() {
 
+    // Sets fonts. Not working yet?
     var fonts = {
       Roboto: {
         normal: "fonts/Roboto-Regular.ttf",
@@ -65,15 +66,10 @@ export class App extends Component {
       }
     };
 
-    let organelles = [
-      "Nucleus",
-      "Mitochondria",
-      "Golgi Apparatus",
-      "Centrosome"
-    ];
+
     let prevNodeLocation = "";
 
-    // Take the node's data add it's connections
+    // Copy the node's data and add it's connections
     let sortedData = [...this.state.data.nodes];
     sortedData.map(node => {
       let connectedTo = [];
