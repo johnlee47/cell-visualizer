@@ -149,7 +149,7 @@ export class App extends Component {
         var docDefinition = {
           content: [
             {
-              image: uri, pageBreak: 'after'
+              image: uri
             },
 
             // Create content for each node
@@ -164,7 +164,10 @@ export class App extends Component {
                       : undefined,
                   bold: true,
                   margin:
-                    prevNodeLocation != node.location ? [5, 12, 10, 20] : [0, 0, 0, 0]
+                    prevNodeLocation != node.location ? [5, 12, 10, 20] : [0, 0, 0, 0],
+                  pageBreak: prevNodeLocation != node.location
+                  ? 'before'
+                  : undefined
                 },
                 {
                   style: "tableExample",
@@ -176,7 +179,7 @@ export class App extends Component {
                     ]
                   },
                   margin: [5, 2, 10, 20]
-                }
+                },
               ];
 
               if (prevNodeLocation != node.location) {
