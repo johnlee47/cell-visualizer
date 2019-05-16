@@ -4,6 +4,7 @@ import { Spin } from "antd";
 const d3 = require("d3");
 import * as bg from "./cell_bg.svg";
 import { get } from "http";
+import { element, func } from "prop-types";
 
 const colorPalletes = ["#f7bac9", "#f28ca5", "#ed5e81", "#c6ecca", "#9fdfa7", "#79d284", "#fff5b3", "#ffee80", "#ffe84d", "#c0caf2",
   "#95a7e9", "#6b84e0", "#fbd3b6", "#f9b585", "#f79855", "#e7bdf4", "#d892ed", "#c866e5", "#b7effb", "#87e4f8", "#56d9f5", "#fab8f6", "#f688f1",
@@ -248,7 +249,6 @@ export default class CellVisualizer extends Component {
       );
 
     gnodes.attr("membrane", d => this.props.groupMapping.find(m => m.component === d.location) ? this.props.groupMapping.find(m => m.component === d.location).membrane : null);
-    console.log(gnodes)
 
     const visualiser = this;
     const groupMapping = this.props.groupMapping;
@@ -256,7 +256,6 @@ export default class CellVisualizer extends Component {
     gnodes.each(function (d, i) {
       const m = groupMapping.find(m => m.component === d.location);
       if (m && m.membrane) {
-        console.log(m.membrane);
         d3.select(this)
           .append("circle")
           .style('fill', '#f6ebf9')
@@ -365,8 +364,9 @@ export default class CellVisualizer extends Component {
         "collision",
         d3.forceCollide().radius(function (d) {
           return radius;
-        })
-      );
+        }))
+      .force("link", d3.forceLink(this.props.data.links).id(d => d.id));
+
 
     this.link = this.svg
       .append("g")
@@ -428,6 +428,7 @@ export default class CellVisualizer extends Component {
     });
 
     this.simulation.on("tick", this.onTick.bind(this));
+
   }
 
   onTick() {
@@ -440,12 +441,16 @@ export default class CellVisualizer extends Component {
           const components = Object.keys(this.cell)
             .filter(
               k => !["plasma_membrane", "cytoplasm", "cell_wall"].includes(k)
+            ).filter(
+              //additional filter for restricting cytoplasmic nodes from entering organelle membranes
+              orgwithMembrane => !this.props.groupMapping.map(obj => obj.component).includes(orgwithMembrane)
             )
             .map(k => this.cell[k]);
           return constraintInsideCell(node.x, node.y, component, components);
         case "extracellular":
           return constraintOutsideCell(node.x, node.y, this.cell);
         default:
+          //const mycomp = Object.keys(this.cell);
           return constraintInsideCell(node.x, node.y, component);
       }
 
