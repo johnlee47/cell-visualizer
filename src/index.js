@@ -18,26 +18,8 @@ pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
-  { group: 0, color: "#740b28", component: "extracellular" },
-  { group: 1, color: "#978cbf", component: "cytoplasm" },
-  { group: 2, color: "#da950c", component: "endosome" },
-  { group: 3, color: "#367baf", component: "glyoxysome" },
-  { group: 4, color: "#ed2cbb", component: "centrosome" },
-  { group: 5, color: "#23903a", component: "peroxisome" },
-  { group: 6, color: "#4ecbb1", component: "plasma_membrane" },
-  { group: 7, color: "#aa873c", component: "glycosome" },
-  { group: 8, color: "#605294", component: "mtoc" },
-  { group: 9, color: "#c71f25", component: "cell_wall" },
-  { group: 10, color: "#c8ee2a", component: "chloroplast" },
-  { group: 11, color: "#740b28", component: "apicoplast" },
-  { group: 13, color: "#978cbf", component: "amyloplast" },
-  { group: 14, color: "#da950c", component: "golgi_apparatus" },
-  { group: 15, color: "#367baf", component: "endoplasmic_reticulum" },
-  { group: 16, color: "#ed2cbb", component: "plastid" },
-  { group: 17, color: "#23903a", component: "mitochondrion" },
-  { group: 18, color: "#4ecbb1", component: "lysosome" },
-  { group: 19, color: "#aa873c", component: "vacuole" },
-  { group: 19, color: "#aa873c", component: "nucleus" }
+  { component: "glyoxysome", membrane: "glyoxysome_membrane" },
+  { component: "centrosome", membrane: "centrosome_membrane" },
 ];
 
 export class App extends Component {
@@ -57,7 +39,7 @@ export class App extends Component {
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
   handleUploadedFileList(file) {
     this.setState({
@@ -328,33 +310,33 @@ export class App extends Component {
         {this.renderVisualization()}
       </Fragment>
     ) : (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          height: "100vh",
-          background: `url(${bg})`,
-          paddingBottom: 90
-        }}
-      >
-        <Typography.Title
-          level={1}
-          style={{ textAlign: "center", fontSize: "2.8rem" }}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            height: "100vh",
+            background: `url(${bg})`,
+            paddingBottom: 90
+          }}
         >
-          Cell Visualizer
+          <Typography.Title
+            level={1}
+            style={{ textAlign: "center", fontSize: "2.8rem" }}
+          >
+            Cell Visualizer
         </Typography.Title>
 
-        <FileUpload
-          title="Click or drag graph file to this area"
-          hint="Upload a graph JSON file to view it in the cell visualizer."
-          fileList={this.state.selectedFileList}
-          onFileUploaded={this.handleFileUploaded}
-          handleFileList={this.handleUploadedFileList}
-        />
-      </div>
-    );
+          <FileUpload
+            title="Click or drag graph file to this area"
+            hint="Upload a graph JSON file to view it in the cell visualizer."
+            fileList={this.state.selectedFileList}
+            onFileUploaded={this.handleFileUploaded}
+            handleFileList={this.handleUploadedFileList}
+          />
+        </div>
+      );
   }
 }
 
