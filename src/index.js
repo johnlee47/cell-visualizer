@@ -110,7 +110,7 @@ export class App extends Component {
       "Golgi Apparatus",
       "Centrosome"
     ];
-    let prevNodeGroup = 0;
+    let prevNodeLocation = "";
 
     // Take the node's data add it's connections
     let sortedData = [...this.state.data.nodes];
@@ -135,10 +135,11 @@ export class App extends Component {
 
     // Sort the node's data first by Group and then by connected nodes
     sortedData.sort((a, b) => {
-      return a.group - b.group || b.connectedTo.length - a.connectedTo.length;
+      return a.location.localeCompare(b.location) || b.connectedTo.length - a.connectedTo.length;
 
     });
 
+    console.log(sortedData)
     // Get the svg and return it's URI
     saveSvgAsPng
       .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
@@ -158,19 +159,19 @@ export class App extends Component {
                 {
                   // Show title for a new organelle
                   text:
-                    prevNodeGroup != node.group
-                      ? organelles[node.group - 1]
+                    prevNodeLocation != node.location
+                      ? node.location
                       : undefined,
                   bold: true,
                   margin:
-                    prevNodeGroup != node.group ? [5, 12, 10, 20] : [0, 0, 0, 0]
+                    prevNodeLocation != node.location ? [5, 12, 10, 20] : [0, 0, 0, 0]
                 },
                 {
                   style: "tableExample",
                   table: {
                     body: [
                       ["Name", node.id],
-                      ["Description", node.description],
+                      ["Description", "" + node.description],
                       [`Connected to (${node.connectedTo.length})`, node.connectedTo.join(", ")]
                     ]
                   },
@@ -178,8 +179,8 @@ export class App extends Component {
                 }
               ];
 
-              if (prevNodeGroup != node.group) {
-                prevNodeGroup = node.group;
+              if (prevNodeLocation != node.location) {
+                prevNodeLocation = node.location;
               }
 
               return nodeInfo;
@@ -243,6 +244,10 @@ export class App extends Component {
             type="primary"
             shape="round"
             onClick={this.handleDownloadPdf}
+            style={{
+              boxShadow:
+                "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
+            }}
           >
             Download Pdf
           </Button>
