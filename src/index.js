@@ -10,7 +10,6 @@ import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
 import * as bg from "./home.svg";
-import html2canvas from "html2canvas";
 import saveSvgAsPng from "save-svg-as-png";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
@@ -56,44 +55,6 @@ export class App extends Component {
   }
 
   handleDownloadPdf() {
-    // let imgData;
-    // const input = document.getElementById("svg_wrapper");
-    // // const input = document.getElementById("svg");
-    // // console.log(input);
-    // // input.style.width = '500px';
-    // // input.style.height = '430px';
-    // // let wrapper = document.createElement("div")
-    // // wrapper.appendChild(input);
-    // // console.log(wrapper)
-    // // document.body.appendChild(wrapper)
-
-    // html2canvas(input, {
-    //   scale: 0.5
-    // }).then(canvas => {
-    //   imgData = canvas.toDataURL("image/png");
-    //   var docDefinition = {
-    //     content: [
-    //       {
-    //         image: imgData
-    //       },
-    //       this.state.data.nodes.map(node => {
-    //         return {
-    //           style: "tableExample",
-    //           table: {
-    //             body: [
-    //               ["Name", node.id],
-    //               ["Description", node.description],
-    //               ["Organelle", node.group]
-    //             ]
-    //           },
-    //           margin: [5, 2, 10, 20]
-    //         };
-    //       })
-    //     ]
-    //   };
-
-    //   pdfMake.createPdf(docDefinition).download();
-    // });
 
     var fonts = {
       Roboto: {
