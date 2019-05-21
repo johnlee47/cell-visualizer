@@ -295,6 +295,7 @@ export default class CellVisualizer extends Component {
           return organellRadius + 15;
         })
       );
+
     this.organnelSimulation
       .on(
         "tick",
