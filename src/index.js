@@ -10,6 +10,10 @@ import "antd/dist/antd.css";
 import "./style.css";
 import { AutoComplete } from "antd";
 import * as bg from "./home.svg";
+import saveSvgAsPng from "save-svg-as-png";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
@@ -31,6 +35,7 @@ export class App extends Component {
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
+    this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
   }
 
   componentDidMount() { }
@@ -47,6 +52,105 @@ export class App extends Component {
 
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
+  }
+
+  handleDownloadPdf() {
+
+    // Sets fonts. Not working yet?
+    var fonts = {
+      Roboto: {
+        normal: "fonts/Roboto-Regular.ttf",
+        bold: "fonts/Roboto-Medium.ttf",
+        italics: "fonts/Roboto-Italic.ttf",
+        bolditalics: "fonts/Roboto-MediumItalic.ttf"
+      }
+    };
+
+
+    let prevNodeLocation = "";
+
+    // Copy the node's data and add it's connections
+    let sortedData = [...this.state.data.nodes];
+    sortedData.map(node => {
+      let connectedTo = [];
+
+      this.state.data.links.map(link => {
+        if (link.source.id == node.id) {
+          if (!connectedTo.includes(link.target.id)) {
+            connectedTo.push(link.target.id);
+          }
+        }
+        if (link.target.id == node.id) {
+          if (!connectedTo.includes(link.source.id)) {
+            connectedTo.push(link.source.id);
+          }
+        }
+      });
+
+      node.connectedTo = connectedTo;
+    });
+
+    // Sort the node's data first by Group and then by connected nodes
+    sortedData.sort((a, b) => {
+      return a.location.localeCompare(b.location) || b.connectedTo.length - a.connectedTo.length;
+
+    });
+
+    console.log(sortedData)
+    // Get the svg and return it's URI
+    saveSvgAsPng
+      .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
+      .then(uri => {
+
+        // Used to set the PDF's content
+        var docDefinition = {
+          content: [
+            {
+              image: uri
+            },
+
+            // Create content for each node
+            sortedData.map(node => {
+              
+              let nodeInfo = [
+                {
+                  // Show title for a new organelle
+                  text:
+                    prevNodeLocation != node.location
+                      ? node.location
+                      : undefined,
+                  bold: true,
+                  margin:
+                    prevNodeLocation != node.location ? [5, 12, 10, 20] : [0, 0, 0, 0],
+                  pageBreak: prevNodeLocation != node.location
+                  ? 'before'
+                  : undefined
+                },
+                {
+                  style: "tableExample",
+                  table: {
+                    body: [
+                      ["Name", node.id],
+                      ["Description", "" + node.description],
+                      [`Connected to (${node.connectedTo.length})`, node.connectedTo.join(", ")]
+                    ]
+                  },
+                  margin: [5, 2, 10, 20]
+                },
+              ];
+
+              if (prevNodeLocation != node.location) {
+                prevNodeLocation = node.location;
+              }
+
+              return nodeInfo;
+            })
+          ]
+        };
+
+        // Download the PDF file
+        pdfMake.createPdf(docDefinition).download();
+      });
   }
 
   renderVisualization() {
@@ -92,6 +196,22 @@ export class App extends Component {
   render() {
     return this.state.data ? (
       <Fragment>
+        <div style={{ right: 15, bottom: 70, position: "absolute" }}>
+          <Button
+            id="download_pdf"
+            icon="download"
+            size={"large"}
+            type="primary"
+            shape="round"
+            onClick={this.handleDownloadPdf}
+            style={{
+              boxShadow:
+                "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
+            }}
+          >
+            Download Pdf
+          </Button>
+        </div>
         <div style={{ right: 15, bottom: 15, position: "absolute" }}>
           <Button
             id="download"
