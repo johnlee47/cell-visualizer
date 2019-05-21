@@ -5,14 +5,10 @@ export class PercentageChart extends Component {
   constructor(props) {
     super(props);
     this.svg = undefined;
-    this.width = 600;
-    this.height = 30;
   }
 
   componentDidMount() {
     this.svg = d3.select("svg#chart");
-    const arr = [...this.props.data]
-    this.calculateCoordinates(arr);
     this.drawChart();
   }
 
@@ -20,7 +16,7 @@ export class PercentageChart extends Component {
     this.drawChart();
   }
 
-  calculateCoordinates(data) {
+  sortAndPositionSegments(data) {
     return data
       .sort((a, b) => (a.value < b.value ? 1 : a.value === b.value ? 0 : -1))
       .map((d, i, self) => {
@@ -28,40 +24,48 @@ export class PercentageChart extends Component {
           self
             .slice(0, i)
             .map(m => m.value)
-            .reduce((acc, curr) => acc + curr, 0) * this.width;
-        d.x2 = d.x1 + d.value * this.width;
+            .reduce((acc, curr) => acc + curr, 0) * this.props.width;
+        d.x2 = d.x1 + d.value * this.props.width;
         return d;
       });
   }
 
+  assignColorToSegments(data) {
+    const { colorPalletes } = this.props;
+    return data.map(d => ({
+      ...d,
+      color: colorPalletes[data.findIndex(l => l.label === d.label)]
+    }));
+  }
+
   drawChart() {
     this.svg = this.svg
-      .attr("width", this.width)
-      .attr("height", this.height)
+      .attr("width", this.props.width)
+      .attr("height", this.props.height)
       .append("g");
-
-      d3.select(".tooltip").remove();
-
+    // Remove previous tooltips if any
+    d3.select(".tooltip").remove();
     // Define the div for the tooltip
     var div = d3
       .select("body")
       .append("div")
       .attr("class", "tooltip")
-      .style("opacity", 0);
+      .style("opacity", 0)
+      .style("bottom", 0);
 
-    div.style("bottom", 0);
-
+    let data = this.assignColorToSegments(this.props.data);
+    data = this.sortAndPositionSegments(data);
     //  Lines
     this.svg
-      .selectAll("bar-chart-line")
-      .data(this.calculateCoordinates(this.props.data))
+      .selectAll(".bar-chart-line")
+      .data(data)
       .enter()
       .append("line")
       .attr("x2", d => d.x2)
       .attr("x1", d => d.x1)
       .attr("y1", 0)
       .attr("y2", 0)
-      .attr("stroke-width", 30)
+      .attr("stroke-width", this.props.height)
       .attr("stroke", d => d.color)
       .on("mouseover", d => {
         div
@@ -69,9 +73,9 @@ export class PercentageChart extends Component {
           .duration(200)
           .style("opacity", 0.9);
         div
-          .html(`${d.component} (${(d.value * 100).toFixed(2)}% )`)
-          .style("left", d3.event.pageX - 30 + "px")
-          .style("bottom", 45 + "px");
+          .html(`${d.label} (${(d.value * 100).toFixed(2)}% )`)
+          .style("left", d3.event.pageX - this.props.height + "px")
+          .style("bottom", this.props.height + 30 + "px");
       })
       .on("mouseout", function(d) {
         div

@@ -11,17 +11,7 @@ export default class OrganelleDescription extends React.Component {
 
     return (
       selectedNode && (
-        <Card
-          bordered={false}
-          style={{
-            position: "absolute",
-            width: 300,
-            right: 15,
-            top: 15,
-            backgroundColor: "#042044",
-            color: "white"
-          }}
-        >
+        <Card bordered={false} className="description-wrapper">
           <Typography.Title style={{ color: "white" }} level={4}>
             {selectedNode.id}
           </Typography.Title>
@@ -31,8 +21,8 @@ export default class OrganelleDescription extends React.Component {
           <div style={{ textAlign: "right" }}>
             <Button.Group>
               <Button
+                type="link"
                 ghost
-                type="default"
                 onClick={() => onNodeSelected(undefined)}
               >
                 Close

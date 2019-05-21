@@ -1,24 +1,32 @@
 import React, { Component, Fragment } from "react";
-import { fetchGraphData } from "./utils";
 import ReactDOM from "react-dom";
 import CellVisualizer from "./CellVisualizer";
 import { PercentageChart } from "./PercentageChart";
 import FileUpload from "./FileUpload";
 import OrganelleDescription from "./OrganelleDescription";
-import { Button, Input, Icon, Typography, Upload } from "antd";
-import "antd/dist/antd.css";
-import "./style.css";
-import { AutoComplete } from "antd";
-import * as bg from "./home.svg";
+import {
+  Button,
+  Input,
+  Icon,
+  Typography,
+  Upload,
+  AutoComplete,
+  Statistic,
+  Card,
+  Spin
+} from "antd";
 import saveSvgAsPng from "save-svg-as-png";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+import { ColorPalletes } from "./utils";
+import "antd/dist/antd.css";
+import "./style.css";
 
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
 const GroupMapping = [
   { component: "glyoxysome", membrane: "glyoxysome_membrane" },
-  { component: "centrosome", membrane: "centrosome_membrane" },
+  { component: "centrosome", membrane: "centrosome_membrane" }
 ];
 
 export class App extends Component {
@@ -29,7 +37,7 @@ export class App extends Component {
       selectedNode: undefined,
       selectedFile: null,
       selectedFileList: [],
-      size: "large"
+      loading: false
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
@@ -37,8 +45,6 @@ export class App extends Component {
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
   }
-
-  componentDidMount() { }
 
   handleUploadedFileList(file) {
     this.setState({
@@ -55,7 +61,6 @@ export class App extends Component {
   }
 
   handleDownloadPdf() {
-
     // Sets fonts. Not working yet?
     var fonts = {
       Roboto: {
@@ -65,15 +70,11 @@ export class App extends Component {
         bolditalics: "fonts/Roboto-MediumItalic.ttf"
       }
     };
-
-
     let prevNodeLocation = "";
-
     // Copy the node's data and add it's connections
     let sortedData = [...this.state.data.nodes];
     sortedData.map(node => {
       let connectedTo = [];
-
       this.state.data.links.map(link => {
         if (link.source.id == node.id) {
           if (!connectedTo.includes(link.target.id)) {
@@ -86,32 +87,27 @@ export class App extends Component {
           }
         }
       });
-
       node.connectedTo = connectedTo;
     });
-
     // Sort the node's data first by Group and then by connected nodes
     sortedData.sort((a, b) => {
-      return a.location.localeCompare(b.location) || b.connectedTo.length - a.connectedTo.length;
-
+      return (
+        a.location.localeCompare(b.location) ||
+        b.connectedTo.length - a.connectedTo.length
+      );
     });
-
-    console.log(sortedData)
     // Get the svg and return it's URI
     saveSvgAsPng
       .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
       .then(uri => {
-
         // Used to set the PDF's content
         var docDefinition = {
           content: [
             {
               image: uri
             },
-
             // Create content for each node
             sortedData.map(node => {
-              
               let nodeInfo = [
                 {
                   // Show title for a new organelle
@@ -121,10 +117,11 @@ export class App extends Component {
                       : undefined,
                   bold: true,
                   margin:
-                    prevNodeLocation != node.location ? [5, 12, 10, 20] : [0, 0, 0, 0],
-                  pageBreak: prevNodeLocation != node.location
-                  ? 'before'
-                  : undefined
+                    prevNodeLocation != node.location
+                      ? [5, 12, 10, 20]
+                      : [0, 0, 0, 0],
+                  pageBreak:
+                    prevNodeLocation != node.location ? "before" : undefined
                 },
                 {
                   style: "tableExample",
@@ -132,114 +129,117 @@ export class App extends Component {
                     body: [
                       ["Name", node.id],
                       ["Description", "" + node.description],
-                      [`Connected to (${node.connectedTo.length})`, node.connectedTo.join(", ")]
+                      [
+                        `Connected to (${node.connectedTo.length})`,
+                        node.connectedTo.join(", ")
+                      ]
                     ]
                   },
                   margin: [5, 2, 10, 20]
-                },
+                }
               ];
-
               if (prevNodeLocation != node.location) {
                 prevNodeLocation = node.location;
               }
-
               return nodeInfo;
             })
           ]
         };
-
         // Download the PDF file
         pdfMake.createPdf(docDefinition).download();
       });
   }
 
   renderVisualization() {
-    const data = GroupMapping.map(m => {
-      const d = Object.assign({}, m);
-      d.value =
-        this.state.data.nodes.filter(n => n.group === d.group).length /
-        this.state.data.nodes.length;
-      d.label = d.component;
-      return d;
+    const { nodes } = this.state.data;
+    // Extract unique locations from graph data
+    const uniqueLocations = new Set(nodes.map(n => n.location));
+    // Calculate the relative percentages of nodes found in each location. This is passed to chart component.
+    const chartData = Array.from(uniqueLocations).map(l => {
+      return {
+        value: nodes.filter(n => n.location === l).length / nodes.length,
+        label: l
+      };
     });
     return (
-      <div
-        style={{
-          height: "100vh",
-          width: "100vw",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column"
-        }}
-      >
+      <div className="visualization-wrapper">
         <CellVisualizer
           selectedNode={this.state.selectedNode}
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
+          colorPalletes={ColorPalletes}
+          updateLoadingStatus={loading => this.setState({ loading })}
         />
-
         {this.state.selectedNode && (
           <OrganelleDescription
             selectedNode={this.state.selectedNode}
             onNodeSelected={this.handleNodeSelected}
           />
         )}
-        <div style={{ position: "absolute", bottom: 0, width: 600 }}>
-          <PercentageChart data={data} />
+        <div className="percentage-chart-wrapper">
+          <PercentageChart
+            width={600}
+            height={30}
+            data={chartData}
+            colorPalletes={ColorPalletes}
+          />
         </div>
       </div>
     );
   }
 
-  render() {
-    return this.state.data ? (
-      <Fragment>
-        <div style={{ right: 15, bottom: 70, position: "absolute" }}>
-          <Button
-            id="download_pdf"
-            icon="download"
-            size={"large"}
-            type="primary"
-            shape="round"
-            onClick={this.handleDownloadPdf}
-            style={{
-              boxShadow:
-                "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
-            }}
-          >
-            Download Pdf
-          </Button>
-        </div>
-        <div style={{ right: 15, bottom: 15, position: "absolute" }}>
-          <Button
-            id="download"
-            icon="download"
-            size={"large"}
-            shape="circle"
-            type="primary"
-            style={{
-              boxShadow:
-                "0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)"
-            }}
-          />
-        </div>
+  renderLandingPage() {
+    return (
+      <div className="landing-page-wrapper">
+        <Typography.Title level={1}>Cell Visualizer</Typography.Title>
+        <FileUpload
+          title="Click or drag graph file to this area"
+          hint="Upload a graph JSON file to view it in the cell visualizer."
+          fileList={this.state.selectedFileList}
+          onFileUploaded={this.handleFileUploaded}
+          handleFileList={this.handleUploadedFileList}
+        />
+      </div>
+    );
+  }
 
-        <div
-          style={{
-            width: "100vw",
-            textAlign: "center",
-            position: "absolute",
-            top: 15
-          }}
-        >
+  renderFloatingActionButtons() {
+    return (
+      <div className="floating-action-buttons-wrapper">
+        <Button
+          id="download_pdf"
+          icon="file-pdf"
+          size={"large"}
+          type="primary"
+          shape="round"
+          className="floating-action-button"
+          onClick={this.handleDownloadPdf}
+        />
+
+        <Button
+          id="download"
+          icon="camera"
+          size={"large"}
+          shape="round"
+          type="primary"
+          className="floating-action-button"
+        />
+      </div>
+    );
+  }
+
+  renderTopBar() {
+    return (
+      <div className="top-bar-wrapper">
+        <div className="content">
+          <Button.Group size="large">
+            <Button type="primary" icon="cloud-download" />
+            <Button type="primary" icon="filter" />
+          </Button.Group>
           <AutoComplete
             dataSource={this.state.data.nodes.map(d => d.id)}
             placeholder="Search ..."
-            style={{
-              width: 600
-            }}
             onSelect={selectedId => {
               this.handleNodeSelected(
                 this.state.data.nodes.find(n => n.id === selectedId)
@@ -251,57 +251,71 @@ export class App extends Component {
                 .indexOf(inputValue.toUpperCase()) !== -1
             }
           >
-            <Input
-              suffix={<Icon type="search" className="certain-category-icon" />}
-            />
+            <Input suffix={<Icon type="search" className="search-icon" />} />
           </AutoComplete>
+          <Button type="primary" icon="left" className="fold-toggle" />
         </div>
+        <div className="extra">
+          <span>
+            <Icon type="file-text" /> fileName.json{" "}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
-        <div
-          style={{
-            left: 15,
-            position: "absolute",
-            top: 15
-          }}
-        >
-          <FileUpload
-            title="Change graph"
-            hint="Select another graph file"
-            fileList={this.state.selectedFileList}
-            onFileUploaded={this.handleFileUploaded}
-            handleFileList={this.handleUploadedFileList}
+  renderLoader() {
+    return (
+      <div className="loader-wrapper">
+        <div className="content">
+          <Spin
+            size="large"
+            indicator={
+              <Icon
+                type="loading"
+                style={{ fontSize: 24, marginRight: 15 }}
+                spin
+              />
+            }
           />
+          <Typography.Text strong>
+            Initialising visualization ...
+          </Typography.Text>
         </div>
-        {this.renderVisualization()}
-      </Fragment>
-    ) : (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-            height: "100vh",
-            background: `url(${bg})`,
-            paddingBottom: 90
-          }}
-        >
-          <Typography.Title
-            level={1}
-            style={{ textAlign: "center", fontSize: "2.8rem" }}
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <Fragment>
+        {this.state.data ? (
+          <Fragment>
+            {this.renderFloatingActionButtons()}
+            {this.renderTopBar()}
+            {this.renderVisualization()}
+            {/* <div
+            style={{
+              left: 15,
+              position: "absolute",
+              top: 15
+            }}
           >
-            Cell Visualizer
-        </Typography.Title>
-
-          <FileUpload
-            title="Click or drag graph file to this area"
-            hint="Upload a graph JSON file to view it in the cell visualizer."
-            fileList={this.state.selectedFileList}
-            onFileUploaded={this.handleFileUploaded}
-            handleFileList={this.handleUploadedFileList}
-          />
-        </div>
-      );
+            <FileUpload
+              title="Change graph"
+              hint="Select another graph file"
+              fileList={this.state.selectedFileList}
+              onFileUploaded={this.handleFileUploaded}
+              handleFileList={this.handleUploadedFileList}
+            />
+          </div> */}
+          </Fragment>
+        ) : (
+          this.renderLandingPage()
+        )}
+        {this.state.loading && this.renderLoader()}
+      </Fragment>
+    );
   }
 }
 

@@ -3,7 +3,7 @@ div.tooltip {
   text-align: center;
   padding: 10px;
   font-size: 14px;
-  background: #042044;
+  background: #1890ff;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -13,9 +13,9 @@ div.tooltip {
 
 .ant-upload.ant-upload-drag {
   border: none;
-  border-radius: 1000px;
+  border-radius: 10px;
   padding: 5px 10px;
-  background: #042044;
+  background: #1890ff;
   color: #fff;
 }
 
@@ -23,4 +23,138 @@ div.tooltip {
 .ant-upload-drag-container,
 .ant-upload-drag-container .ant-typography {
   color: #fff;
+}
+
+.ant-btn-round.ant-btn-lg.floating-action-button {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  width: 45px !important;
+  height: 45px !important;
+  border-radius: 25px;
+  margin: 5px;
+}
+
+.floating-action-buttons-wrapper {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.percentage-chart-wrapper {
+  position: absolute;
+  bottom: 15px;
+}
+
+.visualization-wrapper {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.landing-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+  padding-bottom: 90px;
+}
+
+.landing-page-wrapper h1 {
+  text-align: center;
+  font-size: 3rem;
+}
+
+.top-bar-wrapper {
+  width: 100vw;
+  text-align: center;
+  position: absolute;
+  display: flex;
+  padding: 15px;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.top-bar-wrapper .content {
+  display: flex;
+  flex-shrink: 1;
+  flex-direction: row;
+  background: #1890ff;
+  padding: 5px 15px;
+  border-radius: 10px;
+  align-items: center;
+}
+
+.top-bar-wrapper .content .ant-select-search.ant-select-search--inline {
+  background: #096dd9;
+  color: #fff;
+}
+
+.top-bar-wrapper .content .ant-select-selection__placeholder,
+.top-bar-wrapper .content .search-icon,
+.top-bar-wrapper .content .ant-select-search__field__mirror {
+  color: #e6f7ff;
+}
+
+.top-bar-wrapper .content .ant-input {
+  border: none;
+}
+
+.top-bar-wrapper .content .fold-toggle {
+  margin-left: 30px;
+}
+
+.top-bar-wrapper .extra {
+  display: flex;
+  text-align: left;
+  padding-top: 5px;
+}
+
+.description-wrapper {
+  position: absolute;
+  border-radius: 10px;
+  width: 300px;
+  right: 15px;
+  top: 15px;
+  background-color: #1890ff;
+  color: white;
+}
+
+.loader-wrapper {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background: #e6f7ffaa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-wrapper .content {
+  background-color: #fff;
+  border-radius: 10px;
+}
+
+.tooltip {
+  fill: #fff;
+}
+
+.tooltip-wrapper {
+  fill: #1890ff;
+  opacity: 0.9;
+  border-radius: 5px;
+}
+
+.edge {
+  stroke: #000;
+  stroke-opacity: 0.3;
+  stroke-width: 0.7;
 }
