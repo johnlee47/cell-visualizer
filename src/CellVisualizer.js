@@ -16,11 +16,7 @@ var colorMapper = {};
 
 var colorNo = 0;
 
-// function getColor(d = 1) {
-//   colorNo = (colorNo + d) % colorPalletes.length;
-//   return colorPalletes[colorNo - d];
-// }
-
+var globalCellRef = undefined;
 
 const width = window.innerWidth - 200;
 const height = window.innerHeight - 200;
@@ -189,7 +185,6 @@ export default class CellVisualizer extends Component {
       }.bind(this)
     );
 
-
     var cellWall = this.svg
       .append("g")
       .attr("class", "group_component")
@@ -297,7 +292,6 @@ export default class CellVisualizer extends Component {
         d => d.location
       );
 
-
     this.organnelSimulation = d3
       .forceSimulation(uniqueNodes)
       .force("repel", d3.forceManyBody())
@@ -308,6 +302,7 @@ export default class CellVisualizer extends Component {
           return organellRadius + 30;
         })
       );
+
     this.organnelSimulation
       .on(
         "tick",
@@ -347,25 +342,33 @@ export default class CellVisualizer extends Component {
       .on(
         "end",
         function () {
-          console.log("End");
+          console.log("Organelles made");
           this.setState({ busy: false });
           this.props.data && this.initGraph();
         }.bind(this)
       );
+    globalCellRef = this.cell;
   }
 
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
-      .force("repel", d3.forceManyBody())
+      .force("repel", d3.forceManyBody().strength(1))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("link", d3.forceLink(this.props.data.links).id(d => d.id))
-      .force(
-        "collision",
-        d3.forceCollide().radius(function (d) {
-          return radius;
-        }))
-      .force("link", d3.forceLink(this.props.data.links).id(d => d.id));
+      .force("link", d3.forceLink(this.props.data.links).id(d => d.id).strength(0.0000000001))
+      .force("collision", d3.forceCollide().radius(function (d) {
+        return radius + 1.5;
+      })).force('x', d3.forceX().strength(0.1).x(function (d) {
+        if (d.location != "extracellular") {
+          return globalCellRef[d.location].cx;
+        }
+        return width / 2;
+      })).force('y', d3.forceY().strength(0.1).y(function (d) {
+        if (d.location != "extracellular") {
+          return globalCellRef[d.location].cy;
+        }
+        return height / 2;
+      }));
 
 
     this.link = this.svg
@@ -427,7 +430,13 @@ export default class CellVisualizer extends Component {
       );
     });
 
-    this.simulation.on("tick", this.onTick.bind(this));
+    this.simulation.on("tick", this.onTick.bind(this))
+      .on(
+        "end",
+        function () {
+          console.log("Nodes Initialized");
+        }.bind(this)
+      );
 
   }
 
@@ -554,26 +563,6 @@ export default class CellVisualizer extends Component {
         .attr("x2", targetPosition.x)
         .attr("y2", targetPosition.y);
     });
-
-    //   let alwaysVisibleOrganelles = new Set([
-    //     "extracellular",
-    //     "cell_wall",
-    //     "cytoplasm",
-    //     "plasma_membrane"
-    //   ]);
-    //   let presentOrganelles = new Set();
-    //   this.node.each(function (d) {
-    //     presentOrganelles.add(d.location);
-    //   });
-
-    //   this.props.groupMapping.forEach(organelle => {
-    //     if (
-    //       !presentOrganelles.has(organelle.component) &&
-    //       !alwaysVisibleOrganelles.has(organelle.component)
-    //     ) {
-    //       d3.selectAll("#" + organelle.component + "_group").remove();
-    //     }
-    //   });
   }
 
   drag(simulation) {
