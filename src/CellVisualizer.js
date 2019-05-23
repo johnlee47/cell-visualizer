@@ -4,30 +4,30 @@ const d3 = require("d3");
 
 var colorMapper = {};
 var colorNo = 0;
+var globalCellRef = undefined;
 
 const width = window.innerHeight - 200;
 const height = window.innerHeight - 200;
+const viewportCenter = { x: width / 2, y: height / 2 };
+const organelleRadius = 60;
+const organelleMembraneWidth = 15;
+const nodeRadius = 5;
+const selectedNodeRadius = 15;
+const padding = 5;
 const plasmaMembraneWidth = 40;
 const cellWallWidth = 40;
-var gnodes = undefined;
-const defaultComponentNames = [
+const extracellularWidth = 10;
+// Cellular components that need to be drawn regardless of whether or not they contain nodes within them
+const defaultOrganelleNames = [
   "extracellular",
   "cytoplasm",
   "plasma_membrane",
   "cell_wall"
 ];
 
-var globalCellRef = undefined;
-
-const organellRadius = 60;
-// Radius of nodes
-const radius = 5;
-// Padding between nodes and cellular components that should not crossover
-const padding = 5;
 // Calculate and return the distance between two points
 const calculateDistance = (x1, y1, x2, y2) =>
   Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-
 // Constraint the cell inside a cell component, optionally constrained not to enter some components
 const constraintInsideCell = (
   x,
@@ -94,29 +94,28 @@ export default class CellVisualizer extends Component {
     this.cell = {};
   }
 
-  componentDidUpdate(prevProp) {
-    if (prevProp.data == this.props.data) {
-    } else if (this.props.data) {
-      this.initCellStructure();
-    }
-
-    if (
-      this.props.selectedNode &&
-      prevProp.selectedNode !== this.props.selectedNode
-    ) {
-      this.node.attr("r", radius - 0.75);
-      d3.select(`circle#${this.props.selectedNode.id}`)
-        .transition()
-        .duration(200)
-        .attr("r", 15);
-    }
-    if (!this.props.selectedNode && this.node) {
-      this.node.attr("r", radius - 0.75);
-    }
-  }
-
   componentDidMount() {
     this.initCellStructure();
+  }
+
+  componentDidUpdate(prevProp) {
+    // Re-initialize the cell structure everytime a different data is passed through
+    if (this.props.data && prevProp.data !== this.props.data) {
+      this.reset();
+      this.initCellStructure();
+    }
+    // Check if a node is selected and single it out in the visualization
+    this.handleNodeSelection(prevProp.selectedNode);
+  }
+
+  handleNodeSelection(previouslySelectedNode) {
+    if (!this.node || !this.props.selectedNode) return;
+    if (this.props.selectedNode === previouslySelectedNode) return;
+    d3.select(`circle#${previouslySelectedNode.id}`).attr("r", nodeRadius);
+    d3.select(`circle#${this.props.selectedNode.id}`)
+      .transition()
+      .duration(200)
+      .attr("r", selectedNodeRadius);
   }
 
   parseTranslateValues(translate) {
@@ -127,12 +126,112 @@ export default class CellVisualizer extends Component {
       .map(v => +v);
   }
 
-  initCellStructure() {
-    this.props.updateLoadingStatus(true);
+  reset() {
     this.simulation && this.simulation.stop();
     this.organnelSimulation && this.organnelSimulation.stop();
     this.cell = {};
     d3.selectAll("#svg").remove();
+  }
+
+  registerOrganelle({
+    key,
+    group,
+    rmax,
+    rmin = 0,
+    isMembrane = false,
+    cx = viewportCenter.x,
+    cy = viewportCenter.y
+  }) {
+    this.cell[key] = { cx, cy, rmax, rmin, isMembrane, group };
+  }
+
+  drawOrganelleGroup(key, classes, showCaption = false, membrane = undefined) {
+    const group = this.svg
+      .append("g")
+      .attr("class", `group_component ${classes}`)
+      .attr("id", `${key}_group`)
+      .append("circle")
+      .attr("id", key)
+      .attr("r", this.cell[key].rmax)
+      .attr("cx", this.cell[key].cx)
+      .attr("cy", this.cell[key].cy)
+      .append("svg:title")
+      .text(key);
+
+    if (showCaption) {
+      group
+        .append("text")
+        .style("fill", "#74278c")
+        .style("font-size", "0.7rem")
+        .attr("text-anchor", "middle")
+        .attr("y", 30)
+        .text(d => key);
+    }
+
+    if (membrane) {
+      group
+        .append("circle")
+        .attr("id", membrane)
+        .attr("class", "membrane")
+        .attr("r", organelleRadius + 15);
+    }
+  }
+
+  initCellStructure() {
+    this.props.updateLoadingStatus(true);
+    // Register default organelles
+    this.registerOrganelle({
+      key: "cell_wall",
+      group: "cell_wall_group",
+      rmax: height / 2 - extracellularWidth,
+      rmin: height / 2 - extracellularWidth - cellWallWidth,
+      isMembrane: true
+    });
+    this.registerOrganelle({
+      key: "plasma_membrane",
+      group: "plasma_membrane_group",
+      rmax: this.cell["cell_wall"].rmin,
+      rmin: this.cell["cell_wall"].rmin - plasmaMembraneWidth,
+      isMembrane: true
+    });
+    this.registerOrganelle({
+      key: "cytoplasm",
+      group: "cytoplasm_group",
+      rmax: this.cell["plasma_membrane"].rmin
+    });
+    // Extract all non-default unique locations from graph data
+    const Locations = new Set(
+      this.props.data.nodes
+        .map(n => n.location)
+        .filter(l => !defaultOrganelleNames.includes(l))
+    );
+    // If a node is found in the membrane of an organelle, also include the organelle itself.
+    // Also if a node is found in an organelle, include its membrane
+    Locations.forEach(l => {
+      const mapping = this.props.groupMapping.find(
+        m => m.membrane === l || m.component === l
+      );
+      if (mapping) {
+        Locations.add(mapping.component);
+        Locations.add(mapping.membrane);
+      }
+    });
+    // Register all locations
+    Locations.forEach(l => {
+      const mapping = this.props.groupMapping.find(m => m.membrane === l);
+      const isMembrane = mapping ? true : false;
+      const group = mapping ? `${mapping.component}_group` : `${l}_group`;
+      this.registerOrganelle({
+        key: l,
+        rmax: isMembrane
+          ? organelleRadius + organelleMembraneWidth
+          : organelleRadius,
+        group,
+        isMembrane
+      });
+    });
+    console.log("THIS.CELL", this.cell);
+
     this.svg = d3
       .select("#svg_wrapper")
       .append("svg")
@@ -140,159 +239,71 @@ export default class CellVisualizer extends Component {
       .attr("width", width)
       .attr("height", height);
 
-    this.cell["cell_wall"] = {
-      cx: width / 2,
-      cy: height / 2,
-      rmax: height / 2 - 10,
-      rmin: height / 2 - 10 - cellWallWidth
-    };
-
-    this.cell["plasma_membrane"] = {
-      cx: width / 2,
-      cy: height / 2,
-      rmax: this.cell["cell_wall"].rmin,
-      rmin: this.cell["cell_wall"].rmin - plasmaMembraneWidth
-    };
-
-    this.cell["cytoplasm"] = {
-      cx: width / 2,
-      cy: height / 2,
-      rmax: this.cell["plasma_membrane"].rmin,
-      rmin: 0
-    };
-
-    const componentNamesSet = new Set(
-      defaultComponentNames.concat(
-        this.props.groupMapping.map(m => (m.membrane ? m.membrane : null))
-      )
-    );
-    const uniqueNodes = this.props.data.nodes.filter(
-      function(obj) {
-        if (!componentNamesSet.has(obj.location)) {
-          componentNamesSet.add(obj.location);
-          this.cell[obj.location] = {
-            cx: width / 2,
-            cy: height / 2,
-            rmax: organellRadius,
-            rmin: 0
-          };
-          return obj;
-        }
-      }.bind(this)
+    let DefaultOrgannells = new Set(
+      Object.keys(this.cell).map(key => {
+        if (defaultOrganelleNames.includes(key))
+          return { key, ...this.cell[key] };
+      })
     );
 
-    var cellWall = this.svg
-      .append("g")
-      .attr("class", "group_component")
-      .attr("id", "cell_wall_group")
-      .append("circle")
-      .attr("stroke", "#888DDB")
-      .attr("fill", "#EDECFC")
-      .attr("stroke-width", 1)
-      .attr("id", "cell_wall")
-      .attr("r", this.cell["cell_wall"].rmax)
-      .attr("cx", this.cell["cell_wall"].cx)
-      .attr("cy", this.cell["cell_wall"].cy);
+    let SimulationOrganelles = new Set(
+      Object.keys(this.cell).map(key => {
+        if (!defaultOrganelleNames.includes(key))
+          return { key, ...this.cell[key] };
+      })
+    );
 
-    var plasmaMembrane = this.svg
-      .append("g")
-      .attr("class", "group_component")
-      .attr("id", "plasma_membrane_group")
-      .append("circle")
-      .attr("stroke", "#888DDB")
-      .attr("fill", "#f1f4f1")
-      .attr("stroke-width", 1)
-      .attr("id", "plasma_membrane")
-      .attr("r", this.cell["plasma_membrane"].rmax)
-      .attr("cx", this.cell["plasma_membrane"].cx)
-      .attr("cy", this.cell["plasma_membrane"].cy);
-
-    var cytoplasm = this.svg
-      .append("g")
-      .attr("class", "group_component")
-      .attr("id", "cytoplasm_group")
-      .append("circle")
-      .attr("stroke", "#7e9a82")
-      .attr("fill", "#FFF")
-      .attr("stroke-width", 1)
-      .attr("id", "cytoplasm")
-      .attr("r", this.cell["cytoplasm"].rmax)
-      .attr("cx", this.cell["cytoplasm"].cx)
-      .attr("cy", this.cell["cytoplasm"].cy);
-
-    gnodes = this.svg
-      .selectAll("g.gnode")
-      .data(uniqueNodes)
+    const staticGNodes = this.svg
+      .selectAll("g.static")
+      .data(Array.from(DefaultOrgannells))
       .enter()
       .append("g")
       .attr("class", "group_component")
-      .attr(
-        "id",
-        function(d) {
-          return d.location + "_group";
-        }.bind(this)
-      );
+      .attr("id", g => g.group);
 
-    gnodes.append("svg:title").text(d => d.location);
-
-    gnodes.attr("membrane", d =>
-      this.props.groupMapping.find(m => m.component === d.location)
-        ? this.props.groupMapping.find(m => m.component === d.location).membrane
-        : null
-    );
-
-    const visualiser = this;
-    const groupMapping = this.props.groupMapping;
-
-    gnodes.each(function(d, i) {
-      const m = groupMapping.find(m => m.component === d.location);
-      if (m && m.membrane) {
-        d3.select(this)
-          .append("circle")
-          .style("fill", "#f6ebf9")
-          .attr("id", m.membrane)
-          .attr("class", "membrane")
-          .attr("r", organellRadius + 15);
-
-        visualiser.cell[m.membrane] = {
-          cx: visualiser.cell[d.location].cx,
-          cy: visualiser.cell[d.location].cy,
-          rmax: organellRadius + 15,
-          rmin: visualiser.cell[d.location].rmax
-        };
-      }
+    const cell = this.cell;
+    staticGNodes.each(function(g, i) {
+      Object.keys(cell).map(key => {
+        if (cell[key].group === g.group) {
+          const organelle = { key, ...cell[key] };
+          d3.select(this)
+            .append("circle")
+            .attr("id", key)
+            .attr("class", organelle.isMembrane ? "membrane" : "")
+            .attr("r", organelle.radius);
+        }
+      });
     });
 
-    const node = gnodes
-      .append("circle")
-      .attr("stroke", "#d29be3")
-      .attr("fill", "#f6ebf9")
-      .attr("stroke-width", 1)
-      .attr(
-        "id",
-        function(d) {
-          return d.location;
-        }.bind(this)
-      )
-      .attr("r", organellRadius)
-      .attr("class", "node");
+    const gnodes = this.svg
+      .selectAll("g.gnode")
+      .data(Array.from(SimulationGroups).map(group => ({ group })))
+      .enter()
+      .append("g")
+      .attr("class", "group_component")
+      .attr("id", g => g.group);
 
-    gnodes
-      .append("text")
-      .style("fill", "#74278c")
-      .style("font-size", "0.7rem")
-      .attr("text-anchor", "middle")
-      .attr("y", 30)
-      .text(d => d.location);
+    gnodes.each(function(g, i) {
+      Object.keys(cell).map(key => {
+        if (cell[key].group === g.group) {
+          const organelle = { key, ...cell[key] };
+          d3.select(this)
+            .append("circle")
+            .attr("id", key)
+            .attr("class", organelle.isMembrane ? "membrane" : "")
+            .attr("r", organelle.radius);
+        }
+      });
+    });
 
     this.organnelSimulation = d3
-      .forceSimulation(uniqueNodes)
+      .forceSimulation(gnodes)
       .force("repel", d3.forceManyBody())
-      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("center", d3.forceCenter(viewportCenter.x, viewportCenter.y))
       .force(
         "collision",
         d3.forceCollide().radius(function(d) {
-          return organellRadius + 15;
+          return organelleRadius + 15;
         })
       );
 
@@ -309,28 +320,27 @@ export default class CellVisualizer extends Component {
               d.y,
               cytoplasm,
               [],
-              organellRadius + 15
+              organelleRadius + 15
             );
 
             d3.select(this).attr("transform", function(d, i) {
               return "translate(" + result.x + "," + result.y + ")";
             });
-            cell[d.location].cx = result.x;
-            cell[d.location].cy = result.y;
-            if (groupMapping.find(m => m.component === d.location)) {
-              let membraneName = groupMapping.find(
-                m => m.component === d.location
-              ).membrane;
-              cell[membraneName].cx = result.x;
-              cell[membraneName].cy = result.y;
-            }
+            // cell[d.location].cx = result.x;
+            // cell[d.location].cy = result.y;
+            // if (groupMapping.find(m => m.component === d.location)) {
+            //   let membraneName = groupMapping.find(
+            //     m => m.component === d.location
+            //   ).membrane;
+            //   cell[membraneName].cx = result.x;
+            //   cell[membraneName].cy = result.y;
+            // }
           });
         }.bind(this)
       )
       .on(
         "end",
         function() {
-          console.log("Organelles inistialised");
           this.props.updateLoadingStatus(false);
           this.props.data && this.initGraph();
         }.bind(this)
@@ -353,7 +363,7 @@ export default class CellVisualizer extends Component {
       .force(
         "collision",
         d3.forceCollide().radius(function(d) {
-          return radius + 1.5;
+          return nodeRadius + 1.5;
         })
       )
       .force(
@@ -416,7 +426,7 @@ export default class CellVisualizer extends Component {
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .attr("id", d => d.id)
-      .attr("r", radius - 0.75)
+      .attr("r", nodeRadius - 0.75)
       .attr("class", "node")
       .attr("fill", d => colorMapper[d.location])
       .on(
