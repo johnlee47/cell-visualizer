@@ -14,7 +14,8 @@ import {
   Statistic,
   Card,
   Spin,
-  message
+  message,
+  Popover
 } from "antd";
 import saveSvgAsPng from "save-svg-as-png";
 import pdfMake from "pdfmake/build/pdfmake";
@@ -232,36 +233,41 @@ export class App extends Component {
 
   renderTopBar() {
     return (
-      <div className="top-bar-wrapper">
-        <div className="content">
-          <Button.Group size="large">
-            <Button type="primary" icon="cloud-download" />
-            <Button type="primary" icon="filter" />
-          </Button.Group>
-          <AutoComplete
-            dataSource={this.state.data.nodes.map(d => d.id)}
-            placeholder="Search ..."
-            onSelect={selectedId => {
-              this.handleNodeSelected(
-                this.state.data.nodes.find(n => n.id === selectedId)
-              );
-            }}
-            filterOption={(inputValue, option) =>
-              option.props.children
-                .toUpperCase()
-                .indexOf(inputValue.toUpperCase()) !== -1
-            }
-          >
-            <Input suffix={<Icon type="search" className="search-icon" />} />
-          </AutoComplete>
-          <Button type="primary" icon="left" className="fold-toggle" />
+      <Fragment>
+        <div className="top-bar-wrapper">
+          <div className="menu">
+            <FileUpload
+              title={this.state.selectedFile.name}
+              fileList={this.state.selectedFileList}
+              onFileUploaded={this.handleFileUploaded}
+              handleFileList={this.handleUploadedFileList}
+            />
+            <Button.Group size="large">
+              <Button type="primary" icon="filter" />
+              <Popover content={<p>Controls</p>} title="Title" trigger="click">
+                <Button type="primary" icon="control" />
+              </Popover>
+            </Button.Group>
+            <AutoComplete
+              dataSource={this.state.data.nodes.map(d => d.id)}
+              placeholder="Search ..."
+              onSelect={selectedId => {
+                this.handleNodeSelected(
+                  this.state.data.nodes.find(n => n.id === selectedId)
+                );
+              }}
+              filterOption={(inputValue, option) =>
+                option.props.children
+                  .toUpperCase()
+                  .indexOf(inputValue.toUpperCase()) !== -1
+              }
+            >
+              <Input suffix={<Icon type="search" className="search-icon" />} />
+            </AutoComplete>
+            <Button type="primary" icon="left" className="fold-toggle" />
+          </div>
         </div>
-        <div className="extra">
-          <span>
-            <Icon type="file-text" /> fileName.json{" "}
-          </span>
-        </div>
-      </div>
+      </Fragment>
     );
   }
 
@@ -279,9 +285,7 @@ export class App extends Component {
               />
             }
           />
-          <Typography.Text strong>
-            Initialising visualization ...
-          </Typography.Text>
+          <Typography.Text strong>Running visualization ...</Typography.Text>
         </div>
       </div>
     );
