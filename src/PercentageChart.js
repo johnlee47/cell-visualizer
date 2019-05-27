@@ -13,6 +13,7 @@ export class PercentageChart extends Component {
   }
 
   componentDidUpdate() {
+    this.svg.selectAll().remove();
     this.drawChart();
   }
 
@@ -30,14 +31,6 @@ export class PercentageChart extends Component {
       });
   }
 
-  assignColorToSegments(data) {
-    const { colorPalletes } = this.props;
-    return data.map(d => ({
-      ...d,
-      color: colorPalletes[data.findIndex(l => l.label === d.label)]
-    }));
-  }
-
   drawChart() {
     this.svg = this.svg
       .attr("width", this.props.width)
@@ -53,8 +46,7 @@ export class PercentageChart extends Component {
       .style("opacity", 0)
       .style("bottom", 0);
 
-    let data = this.assignColorToSegments(this.props.data);
-    data = this.sortAndPositionSegments(data);
+    let data = this.sortAndPositionSegments(this.props.data);
     //  Lines
     this.svg
       .selectAll(".bar-chart-line")

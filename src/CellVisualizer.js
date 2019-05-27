@@ -96,6 +96,7 @@ export default class CellVisualizer extends Component {
 
   componentDidUpdate(prevProp) {
     if (prevProp.data == this.props.data) {
+      if (this.node) this.node.attr("fill", d => this.props.colorSelector(d));
     } else if (this.props.data) {
       this.initCellStructure();
     }
@@ -418,7 +419,7 @@ export default class CellVisualizer extends Component {
       .attr("id", d => d.id)
       .attr("r", radius - 0.75)
       .attr("class", "node")
-      .attr("fill", d => colorMapper[d.location])
+      .attr("fill", d => this.props.colorSelector(d))
       .on(
         "click",
         function(d, i) {

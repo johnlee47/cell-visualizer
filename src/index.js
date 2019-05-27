@@ -21,6 +21,7 @@ import pdfFonts from "pdfmake/build/vfs_fonts";
 import { ColorPalletes } from "./utils";
 import "antd/dist/antd.css";
 import "./style.css";
+import { ColorSchemeSelector } from "./ColorSchemeSelector";
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
@@ -37,13 +38,16 @@ export class App extends Component {
       selectedNode: undefined,
       selectedFile: null,
       selectedFileList: [],
-      loading: false
+      loading: false,
+      colorScheme: null,
+      colorSelector: n => "#000"
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
+    this.handleColorSchemeChange = this.handleColorSchemeChange.bind(this);
   }
 
   handleUploadedFileList(file) {
@@ -151,16 +155,6 @@ export class App extends Component {
   }
 
   renderVisualization() {
-    const { nodes } = this.state.data;
-    // Extract unique locations from graph data
-    const uniqueLocations = new Set(nodes.map(n => n.location));
-    // Calculate the relative percentages of nodes found in each location. This is passed to chart component.
-    const chartData = Array.from(uniqueLocations).map(l => {
-      return {
-        value: nodes.filter(n => n.location === l).length / nodes.length,
-        label: l
-      };
-    });
     return (
       <div className="visualization-wrapper">
         <CellVisualizer
@@ -170,6 +164,7 @@ export class App extends Component {
           onNodeSelected={this.handleNodeSelected}
           colorPalletes={ColorPalletes}
           updateLoadingStatus={loading => this.setState({ loading })}
+          colorSelector={this.state.colorSelector}
         />
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -177,14 +172,15 @@ export class App extends Component {
             onNodeSelected={this.handleNodeSelected}
           />
         )}
-        <div className="percentage-chart-wrapper">
-          <PercentageChart
-            width={600}
-            height={30}
-            data={chartData}
-            colorPalletes={ColorPalletes}
-          />
-        </div>
+        {this.state.colorScheme && (
+          <div className="percentage-chart-wrapper">
+            <PercentageChart
+              width={600}
+              height={30}
+              data={this.state.colorScheme}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -286,6 +282,10 @@ export class App extends Component {
     );
   }
 
+  handleColorSchemeChange(colorScheme, colorSelector) {
+    this.setState({ colorScheme, colorSelector });
+  }
+
   render() {
     return (
       <Fragment>
@@ -294,21 +294,13 @@ export class App extends Component {
             {this.renderFloatingActionButtons()}
             {this.renderTopBar()}
             {this.renderVisualization()}
-            {/* <div
-            style={{
-              left: 15,
-              position: "absolute",
-              top: 15
-            }}
-          >
-            <FileUpload
-              title="Change graph"
-              hint="Select another graph file"
-              fileList={this.state.selectedFileList}
-              onFileUploaded={this.handleFileUploaded}
-              handleFileList={this.handleUploadedFileList}
-            />
-          </div> */}
+            <div style={{ position: "absolute", top: 120, left: 15 }}>
+              <ColorSchemeSelector
+                data={this.state.data}
+                colorPalletes={ColorPalletes}
+                onColorSchemeChange={this.handleColorSchemeChange}
+              />
+            </div>
           </Fragment>
         ) : (
           this.renderLandingPage()

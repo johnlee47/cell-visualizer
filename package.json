@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "antd": "^3.16.3",
+    "color": "^3.1.1",
     "d3": "^5.9.2",
     "pdfmake": "^0.1.56",
     "react": "^16.8.5",
