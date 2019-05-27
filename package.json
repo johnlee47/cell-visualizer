@@ -17,7 +17,8 @@
     "pdfmake": "^0.1.56",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
-    "save-svg-as-png": "^1.4.14"
+    "save-svg-as-png": "^1.4.14",
+    "yup": "^0.27.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0",

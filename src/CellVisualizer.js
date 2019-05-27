@@ -5,17 +5,12 @@ const d3 = require("d3");
 var colorMapper = {};
 var colorNo = 0;
 
-const width = window.innerHeight - 200;
-const height = window.innerHeight - 200;
-const plasmaMembraneWidth = 40;
-const cellWallWidth = 40;
+const width = window.innerHeight;
+const height = window.innerHeight;
+const plasmaMembraneWidth = 30;
+const extracellularWidth = 30;
 var gnodes = undefined;
-const defaultComponentNames = [
-  "extracellular",
-  "cytoplasm",
-  "plasma_membrane",
-  "cell_wall"
-];
+const defaultComponentNames = ["extracellular", "cytoplasm", "plasma_membrane"];
 
 var globalCellRef = undefined;
 
@@ -24,6 +19,7 @@ const organellRadius = 60;
 const radius = 5;
 // Padding between nodes and cellular components that should not crossover
 const padding = 5;
+const unlocalizedMargin = 15;
 // Calculate and return the distance between two points
 const calculateDistance = (x1, y1, x2, y2) =>
   Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
@@ -67,19 +63,28 @@ const constraintInsideCell = (
 
 // Constraint the cell outside the cell and not let it enter the cell
 const constraintOutsideCell = (x, y, cell) => {
-  // If the cell has a cellwall, consider that its outter border. If not consider the plasma membrane its outer border
-  var border = cell["cell_wall"] ? cell["cell_wall"] : cell["plasma_membrane"];
+  var border = cell["extracellular"];
   let R = calculateDistance(x, y, border.cx, border.cy);
-  if (R < border.rmax + padding) {
+  if (R < border.rmax + unlocalizedMargin) {
     return {
-      x: ((border.rmax + padding) / R) * (x - border.cx) + border.cx,
-      y: ((border.rmax + padding) / R) * (y - border.cy) + border.cy
+      x: ((border.rmax + unlocalizedMargin) / R) * (x - border.cx) + border.cx,
+      y: ((border.rmax + unlocalizedMargin) / R) * (y - border.cy) + border.cy
     };
   }
   // Do not let the node out of the viewport
   return {
-    x: x < padding ? padding : x > width - padding ? width - padding : x,
-    y: y < padding ? padding : y > height - padding ? height - padding : y
+    x:
+      x < unlocalizedMargin
+        ? unlocalizedMargin
+        : x > width - unlocalizedMargin
+        ? width - unlocalizedMargin
+        : x,
+    y:
+      y < unlocalizedMargin
+        ? unlocalizedMargin
+        : y > height - unlocalizedMargin
+        ? height - unlocalizedMargin
+        : y
   };
 };
 
@@ -138,26 +143,27 @@ export default class CellVisualizer extends Component {
       .select("#svg_wrapper")
       .append("svg")
       .attr("id", "svg")
-      .attr("width", width)
+      .attr("width", width + 300)
+      .style("padding-left", 150)
       .attr("height", height);
 
-    this.cell["cell_wall"] = {
+    this.cell["extracellular"] = {
       cx: width / 2,
-      cy: height / 2,
-      rmax: height / 2 - 10,
-      rmin: height / 2 - 10 - cellWallWidth
+      cy: height / 2 - 30,
+      rmax: height / 2 - 45,
+      rmin: height / 2 - 45 - extracellularWidth
     };
 
     this.cell["plasma_membrane"] = {
-      cx: width / 2,
-      cy: height / 2,
-      rmax: this.cell["cell_wall"].rmin,
-      rmin: this.cell["cell_wall"].rmin - plasmaMembraneWidth
+      cx: this.cell["extracellular"].cx,
+      cy: this.cell["extracellular"].cy,
+      rmax: this.cell["extracellular"].rmin,
+      rmin: this.cell["extracellular"].rmin - plasmaMembraneWidth
     };
 
     this.cell["cytoplasm"] = {
-      cx: width / 2,
-      cy: height / 2,
+      cx: this.cell["plasma_membrane"].cx,
+      cy: this.cell["plasma_membrane"].cy,
       rmax: this.cell["plasma_membrane"].rmin,
       rmin: 0
     };
@@ -169,11 +175,11 @@ export default class CellVisualizer extends Component {
     );
     const uniqueNodes = this.props.data.nodes.filter(
       function(obj) {
-        if (!componentNamesSet.has(obj.location)) {
+        if (obj.location && !componentNamesSet.has(obj.location)) {
           componentNamesSet.add(obj.location);
           this.cell[obj.location] = {
-            cx: width / 2,
-            cy: height / 2,
+            cx: this.cell["cytoplasm"].cx,
+            cy: this.cell["cytoplasm"].cy,
             rmax: organellRadius,
             rmin: 0
           };
@@ -182,25 +188,25 @@ export default class CellVisualizer extends Component {
       }.bind(this)
     );
 
-    var cellWall = this.svg
+    var extracellularGroup = this.svg
       .append("g")
       .attr("class", "group_component")
-      .attr("id", "cell_wall_group")
+      .attr("id", "extracellular_group")
       .append("circle")
-      .attr("stroke", "#888DDB")
-      .attr("fill", "#EDECFC")
-      .attr("stroke-width", 1)
-      .attr("id", "cell_wall")
-      .attr("r", this.cell["cell_wall"].rmax)
-      .attr("cx", this.cell["cell_wall"].cx)
-      .attr("cy", this.cell["cell_wall"].cy);
+      // .attr("stroke", "#888DDB")
+      .attr("fill", "#eae9fc")
+      // .attr("stroke-width", 1)
+      .attr("id", "extracellular")
+      .attr("r", this.cell["extracellular"].rmax)
+      .attr("cx", this.cell["extracellular"].cx)
+      .attr("cy", this.cell["extracellular"].cy);
 
     var plasmaMembrane = this.svg
       .append("g")
       .attr("class", "group_component")
       .attr("id", "plasma_membrane_group")
       .append("circle")
-      .attr("stroke", "#888DDB")
+      .attr("stroke", "#7e9a82")
       .attr("fill", "#f1f4f1")
       .attr("stroke-width", 1)
       .attr("id", "plasma_membrane")
@@ -363,7 +369,7 @@ export default class CellVisualizer extends Component {
           .forceX()
           .strength(0.1)
           .x(function(d) {
-            if (d.location != "extracellular") {
+            if (d.location && d.location != "extracellular") {
               return globalCellRef[d.location].cx;
             }
             return width / 2;
@@ -375,7 +381,7 @@ export default class CellVisualizer extends Component {
           .forceY()
           .strength(0.1)
           .y(function(d) {
-            if (d.location != "extracellular") {
+            if (d.location && d.location != "extracellular") {
               return globalCellRef[d.location].cy;
             }
             return height / 2;
@@ -448,10 +454,13 @@ export default class CellVisualizer extends Component {
     const calculateNewPosition = node => {
       const component = this.cell[node.location];
       switch (node.location) {
+        case "":
+          return constraintOutsideCell(node.x, node.y, this.cell);
         case "cytoplasm":
           const components = Object.keys(this.cell)
             .filter(
-              k => !["plasma_membrane", "cytoplasm", "cell_wall"].includes(k)
+              k =>
+                !["plasma_membrane", "cytoplasm", "extracellular"].includes(k)
             )
             .filter(
               //additional filter for restricting cytoplasmic nodes from entering organelle membranes
@@ -462,8 +471,6 @@ export default class CellVisualizer extends Component {
             )
             .map(k => this.cell[k]);
           return constraintInsideCell(node.x, node.y, component, components);
-        case "extracellular":
-          return constraintOutsideCell(node.x, node.y, this.cell);
         default:
           //const mycomp = Object.keys(this.cell);
           return constraintInsideCell(node.x, node.y, component);

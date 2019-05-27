@@ -13,12 +13,13 @@ import {
   AutoComplete,
   Statistic,
   Card,
-  Spin
+  Spin,
+  message
 } from "antd";
 import saveSvgAsPng from "save-svg-as-png";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-import { ColorPalletes } from "./utils";
+import { ColorPalletes, GraphSchema } from "./utils";
 import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
@@ -57,7 +58,11 @@ export class App extends Component {
     });
   }
   handleFileUploaded(data) {
-    this.setState({ data });
+    GraphSchema.isValid(data).then(
+      function(valid) {
+        valid ? this.setState({ data }) : message.error("Invlaid JSON file.");
+      }.bind(this)
+    );
   }
 
   handleNodeSelected(node) {

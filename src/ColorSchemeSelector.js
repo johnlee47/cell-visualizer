@@ -116,10 +116,23 @@ export class ColorSchemeSelector extends React.Component {
   }
 
   colorSchemeByDiscereteAttribute(attribute) {
-    const relativePercentages = this.calculateRelativePercentages(attribute);
+    const relativePercentages = this.calculateRelativePercentages(
+      attribute
+    ).map(rp => {
+      if (rp.label === "") {
+        rp.label = "Unlocalized";
+      }
+      return rp;
+    });
+    console.log("RELATIVE", relativePercentages);
     const colorScheme = this.assignColors(relativePercentages);
-    const colorSelector = n =>
-      colorScheme.find(s => s.label === n[attribute]).color;
+    const colorSelector = n => {
+      const cs =
+        colorScheme.find(s => s.label === n[attribute]) ||
+        colorScheme.find(s => s.label === "Unlocalized");
+      return cs.color;
+    };
+
     return { colorScheme, colorSelector };
   }
 

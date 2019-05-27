@@ -1,3 +1,4 @@
+import * as Yup from "yup";
 export const ColorPalletes = [
   "#e6194b",
   "#3cb44b",
@@ -36,3 +37,21 @@ export const ColorPalletes = [
   "#bfbfbf",
   "#a6a6a6"
 ];
+
+const NodeSchema = Yup.object().shape({
+  id: Yup.string().required(),
+  location: Yup.string()
+});
+const LinkSchema = Yup.object().shape({
+  source: Yup.string().required(),
+  target: Yup.string().required()
+});
+
+export const GraphSchema = Yup.object().shape({
+  nodes: Yup.array()
+    .of(NodeSchema)
+    .required(),
+  links: Yup.array()
+    .of(LinkSchema)
+    .required()
+});
