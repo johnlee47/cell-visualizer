@@ -4,8 +4,6 @@ const d3 = require("d3");
 
 var globalCellRef = undefined;
 
-// Radius of nodes
-const radius = 5;
 // Padding between nodes and cellular components that should not crossover
 const unlocalizedMargin = 15;
 const width = window.innerHeight;
@@ -18,9 +16,12 @@ const selectedNodeRadius = 15;
 const padding = 5;
 const plasmaMembraneWidth = 30;
 const extracellularWidth = 30;
-let gnodes;
 // Cellular components that need to be drawn regardless of whether or not they contain nodes within them
-const defaultOrganelleNames = ["extracellular", "cytoplasm", "plasma_membrane"];
+const defaultOrganelleNames = [
+  "extracellular_region",
+  "cytoplasm",
+  "plasma_membrane"
+];
 
 // Calculate and return the distance between two points
 const calculateDistance = (x1, y1, x2, y2) =>
@@ -64,7 +65,7 @@ const constraintInsideCell = (
 
 // Constraint the cell outside the cell and not let it enter the cell
 const constraintOutsideCell = (x, y, cell) => {
-  var border = cell["extracellular"];
+  var border = cell["extracellular_region"];
   let R = calculateDistance(x, y, border.cx, border.cy);
   if (R < border.rmax + unlocalizedMargin) {
     return {
@@ -89,6 +90,8 @@ const constraintOutsideCell = (x, y, cell) => {
   };
 };
 
+const decodeLocation = location => location.trim().replace("_", " ");
+
 export default class CellVisualizer extends Component {
   constructor(props) {
     super(props);
@@ -98,6 +101,7 @@ export default class CellVisualizer extends Component {
     this.node = undefined;
     this.link = undefined;
     this.cell = {};
+    this.groupComponents = undefined;
   }
 
   componentDidMount() {
@@ -105,6 +109,37 @@ export default class CellVisualizer extends Component {
   }
 
   componentDidUpdate(prevProp) {
+    const { organelleFilter } = this.props;
+    if (organelleFilter) {
+      const hiddenOrganelles = Object.keys(organelleFilter).filter(
+        k => !organelleFilter[k]
+      );
+      if (this.groupComponents)
+        this.groupComponents.attr("class", function(g) {
+          const c = this.getAttribute("class")
+            .replace(/hidden/g, "")
+            .trim();
+          return hiddenOrganelles.includes(g.id) ? `hidden ${c}` : c;
+        });
+      if (this.node)
+        this.node.attr("class", function(n) {
+          const c = this.getAttribute("class")
+            .replace(/hidden/g, "")
+            .trim();
+          return hiddenOrganelles.includes(n.location) ? `hidden ${c}` : c;
+        });
+      if (this.link)
+        this.link.attr("class", function(l) {
+          const c = this.getAttribute("class")
+            .replace(/hidden/g, "")
+            .trim();
+          return hiddenOrganelles.includes(l.source.location) ||
+            hiddenOrganelles.includes(l.target.location)
+            ? `hidden ${c}`
+            : c;
+        });
+    }
+
     if (prevProp.data == this.props.data) {
       if (this.node) this.node.attr("fill", d => this.props.colorSelector(d));
     } else if (this.props.data) {
@@ -115,9 +150,10 @@ export default class CellVisualizer extends Component {
   }
 
   handleNodeSelection(previouslySelectedNode) {
+    if (previouslySelectedNode)
+      d3.select(`circle#${previouslySelectedNode.id}`).attr("r", nodeRadius);
     if (!this.node || !this.props.selectedNode) return;
     if (this.props.selectedNode === previouslySelectedNode) return;
-    d3.select(`circle#${previouslySelectedNode.id}`).attr("r", nodeRadius);
     d3.select(`circle#${this.props.selectedNode.id}`)
       .transition()
       .duration(200)
@@ -141,10 +177,7 @@ export default class CellVisualizer extends Component {
 
   initCellStructure() {
     this.props.updateLoadingStatus(true);
-    this.simulation && this.simulation.stop();
-    this.organnelSimulation && this.organnelSimulation.stop();
-    this.cell = {};
-    d3.selectAll("#svg").remove();
+    this.reset();
     this.svg = d3
       .select("#svg_wrapper")
       .append("svg")
@@ -152,7 +185,7 @@ export default class CellVisualizer extends Component {
       .attr("width", width)
       .attr("height", height);
 
-    this.cell["extracellular"] = {
+    this.cell["extracellular_region"] = {
       cx: viewportCenter.x,
       cy: viewportCenter.y,
       rmax: height / 2 - 45,
@@ -162,8 +195,8 @@ export default class CellVisualizer extends Component {
     this.cell["plasma_membrane"] = {
       cx: viewportCenter.x,
       cy: viewportCenter.y,
-      rmax: this.cell["extracellular"].rmin,
-      rmin: this.cell["extracellular"].rmin - plasmaMembraneWidth
+      rmax: this.cell["extracellular_region"].rmin,
+      rmin: this.cell["extracellular_region"].rmin - plasmaMembraneWidth
     };
 
     this.cell["cytoplasm"] = {
@@ -173,35 +206,15 @@ export default class CellVisualizer extends Component {
       rmin: 0
     };
 
-    const componentNamesSet = new Set(
-      defaultOrganelleNames.concat(
-        this.props.groupMapping.map(m => (m.membrane ? m.membrane : null))
-      )
-    );
-    const uniqueNodes = this.props.data.nodes.filter(
-      function(obj) {
-        if (obj.location && !componentNamesSet.has(obj.location)) {
-          componentNamesSet.add(obj.location);
-          this.cell[obj.location] = {
-            cx: viewportCenter.x,
-            cy: viewportCenter.y,
-            rmax: organelleRadius,
-            rmin: 0
-          };
-          return obj;
-        }
-      }.bind(this)
-    );
-
     var extracellular = this.svg
       .append("g")
       .attr("class", "group_component")
       .attr("id", "extracellular_group")
       .append("circle")
-      .attr("id", "extracellular")
-      .attr("r", this.cell["extracellular"].rmax)
-      .attr("cx", this.cell["extracellular"].cx)
-      .attr("cy", this.cell["extracellular"].cy);
+      .attr("id", "extracellular_region")
+      .attr("r", this.cell["extracellular_region"].rmax)
+      .attr("cx", this.cell["extracellular_region"].cx)
+      .attr("cy", this.cell["extracellular_region"].cy);
 
     var plasmaMembrane = this.svg
       .append("g")
@@ -223,9 +236,44 @@ export default class CellVisualizer extends Component {
       .attr("cx", this.cell["cytoplasm"].cx)
       .attr("cy", this.cell["cytoplasm"].cy);
 
-    gnodes = this.svg
+    const Organelles = new Set(
+      this.props.data.nodes
+        .map(n => n.location)
+        .filter(l => l && !defaultOrganelleNames.includes(l))
+    );
+    const NonMembraneOrganelles = new Set([]);
+    Array.from(Organelles).map(o => {
+      const groupMapping = this.props.groupMapping.filter(
+        m => m.membrane === o
+      );
+      groupMapping.length
+        ? groupMapping.map(m => NonMembraneOrganelles.add(m.component))
+        : NonMembraneOrganelles.add(o);
+    });
+    NonMembraneOrganelles.forEach(organelle => {
+      this.cell[organelle] = {
+        cx: viewportCenter.x,
+        cy: viewportCenter.y,
+        rmax: function() {
+          const nodes = this.props.data.nodes.filter(
+            n => n.location === organelle
+          ).length;
+          return nodes < 10 ? 30 : nodes < 25 ? 60 : nodes < 60 ? 75 : 90;
+        }.bind(this)(),
+        rmin: 0
+      };
+    });
+    const NonMembraneOrganelleObjects = Array.from(NonMembraneOrganelles).map(
+      (o, i) => ({
+        id: o,
+        location: o,
+        r: this.cell[o].rmax
+      })
+    );
+
+    this.groupComponents = this.svg
       .selectAll("g.gnode")
-      .data(uniqueNodes)
+      .data(NonMembraneOrganelleObjects)
       .enter()
       .append("g")
       .attr("class", "group_component")
@@ -236,67 +284,60 @@ export default class CellVisualizer extends Component {
         }.bind(this)
       );
 
-    gnodes.append("svg:title").text(d => d.location);
-
-    gnodes.attr("membrane", d =>
-      this.props.groupMapping.find(m => m.component === d.location)
-        ? this.props.groupMapping.find(m => m.component === d.location).membrane
-        : null
-    );
+    this.groupComponents.append("svg:title").text(d => d.location);
 
     const visualiser = this;
     const groupMapping = this.props.groupMapping;
+    const nodes = this.props.data.nodes;
+    this.groupComponents.each(function(d) {
+      const mappings = groupMapping.filter(m => m.component === d.location);
+      mappings.forEach(m => {
+        if (m.membrane.trim()) {
+          const membrane = m.membrane;
+          d.membrane = membrane;
+          visualiser.cell[membrane] = {
+            cx: visualiser.cell[d.location].cx,
+            cy: visualiser.cell[d.location].cy,
+            rmax: nodes.filter(n => n.location === membrane).length
+              ? visualiser.cell[d.location].rmax + organelleMembraneWidth
+              : visualiser.cell[d.location].rmax + 5,
+            rmin: visualiser.cell[d.location].rmax
+          };
 
-    gnodes.each(function(d, i) {
-      const m = groupMapping.find(m => m.component === d.location);
-      if (m && m.membrane) {
-        d3.select(this)
-          .append("circle")
-          .style("fill", "#f6ebf9")
-          .attr("id", m.membrane)
-          .attr("class", "membrane")
-          .attr("r", organelleRadius + organelleMembraneWidth);
-
-        visualiser.cell[m.membrane] = {
-          cx: visualiser.cell[d.location].cx,
-          cy: visualiser.cell[d.location].cy,
-          rmax: organelleRadius + organelleMembraneWidth,
-          rmin: visualiser.cell[d.location].rmax
-        };
-      }
+          d3.select(this)
+            .append("circle")
+            .attr("id", membrane)
+            .attr("class", "circle membrane")
+            .attr("r", visualiser.cell[membrane].rmax);
+        }
+      });
     });
 
-    const node = gnodes
+    const node = this.groupComponents
       .append("circle")
-      .attr("stroke", "#d29be3")
-      .attr("fill", "#f6ebf9")
-      .attr("stroke-width", 1)
-      .attr(
-        "id",
-        function(d) {
-          return d.location;
-        }.bind(this)
-      )
-      .attr("r", organelleRadius)
-      .attr("class", "node");
+      .attr("id", d => d.location)
+      .attr("r", d => {
+        return d.r;
+      })
+      .attr("class", "circle node");
 
-    gnodes
+    this.groupComponents
       .append("text")
-      .style("fill", "#74278c")
-      .style("font-size", "0.7rem")
-      .attr("text-anchor", "middle")
       .attr("y", 30)
       .text(d => d.location);
 
     this.organnelSimulation = d3
-      .forceSimulation(uniqueNodes)
-      .force("repel", d3.forceManyBody())
-      .force("center", d3.forceCenter(width / 2, height / 2))
+      .forceSimulation(NonMembraneOrganelleObjects.sort((a, b) => a.r - b.r))
+      .force("center", d3.forceCenter(viewportCenter.x, viewportCenter.y))
+      .force(
+        "c",
+        d3
+          .forceManyBody()
+          .strength(NonMembraneOrganelleObjects.length < 10 ? -15 : -3)
+      )
       .force(
         "collision",
-        d3.forceCollide().radius(function(d) {
-          return organelleRadius + 15;
-        })
+        d3.forceCollide().radius((n, i, nodes) => n.r + organelleMembraneWidth)
       );
 
     this.organnelSimulation
@@ -306,13 +347,13 @@ export default class CellVisualizer extends Component {
           const cell = this.cell;
           const cytoplasm = cell["cytoplasm"];
           const groupMapping = this.props.groupMapping;
-          gnodes.each(function(d) {
+          this.groupComponents.each(function(d) {
             const result = constraintInsideCell(
               d.x,
               d.y,
               cytoplasm,
               [],
-              organelleRadius + 15
+              organelleRadius
             );
 
             d3.select(this).attr("transform", function(d, i) {
@@ -320,12 +361,9 @@ export default class CellVisualizer extends Component {
             });
             cell[d.location].cx = result.x;
             cell[d.location].cy = result.y;
-            if (groupMapping.find(m => m.component === d.location)) {
-              let membraneName = groupMapping.find(
-                m => m.component === d.location
-              ).membrane;
-              cell[membraneName].cx = result.x;
-              cell[membraneName].cy = result.y;
+            if (d.membrane) {
+              cell[d.membrane].cx = result.x;
+              cell[d.membrane].cy = result.y;
             }
           });
         }.bind(this)
@@ -333,7 +371,6 @@ export default class CellVisualizer extends Component {
       .on(
         "end",
         function() {
-          console.log("Organelles inistialised");
           this.props.updateLoadingStatus(false);
           this.props.data && this.initGraph();
         }.bind(this)
@@ -344,29 +381,38 @@ export default class CellVisualizer extends Component {
   initGraph() {
     this.simulation = d3
       .forceSimulation(this.props.data.nodes)
-      .force("repel", d3.forceManyBody().strength(1))
-      .force("center", d3.forceCenter(width / 2, height / 2))
       .force(
         "link",
         d3
           .forceLink(this.props.data.links)
           .id(d => d.id)
-          .strength(0.0000000001)
+          .strength(0)
       )
       .force(
         "collision",
-        d3.forceCollide().radius(function(d) {
-          return nodeRadius + 1.5;
-        })
+        d3
+          .forceCollide()
+          .radius(d => {
+            if (d.location === "cytoplasm") {
+              return nodeRadius + 15;
+            }
+            return nodeRadius + 2;
+          })
+          .strength(0.5)
       )
       .force(
         "x",
         d3
           .forceX()
-          .strength(0.1)
+          .strength(0.3)
           .x(function(d) {
-            if (d.location && d.location != "extracellular") {
-              return globalCellRef[d.location].cx;
+            const location = d.location;
+            if (
+              location &&
+              location != "extracellular_region" &&
+              location != "cytoplasm"
+            ) {
+              return globalCellRef[location].cx;
             }
             return width / 2;
           })
@@ -375,10 +421,15 @@ export default class CellVisualizer extends Component {
         "y",
         d3
           .forceY()
-          .strength(0.1)
+          .strength(0.3)
           .y(function(d) {
-            if (d.location && d.location != "extracellular") {
-              return globalCellRef[d.location].cy;
+            const location = d.location;
+            if (
+              location &&
+              location != "extracellular_region" &&
+              location != "cytoplasm"
+            ) {
+              return globalCellRef[location].cy;
             }
             return height / 2;
           })
@@ -396,7 +447,7 @@ export default class CellVisualizer extends Component {
         return d.id;
       });
 
-    var gnodes = this.svg
+    var groupComponents = this.svg
       .selectAll("g.gnode")
       .data(this.props.data.nodes)
       .enter()
@@ -405,7 +456,7 @@ export default class CellVisualizer extends Component {
         return d.id + "_g";
       });
 
-    this.node = gnodes
+    this.node = groupComponents
       .append("circle")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
@@ -439,7 +490,8 @@ export default class CellVisualizer extends Component {
   onTick() {
     // Calculate the node's new position after applying the constraints
     const calculateNewPosition = node => {
-      const component = this.cell[node.location];
+      const location = node.location;
+      const component = this.cell[location];
       switch (node.location) {
         case "":
           return constraintOutsideCell(node.x, node.y, this.cell);
@@ -447,7 +499,11 @@ export default class CellVisualizer extends Component {
           const components = Object.keys(this.cell)
             .filter(
               k =>
-                !["plasma_membrane", "cytoplasm", "extracellular"].includes(k)
+                ![
+                  "plasma_membrane",
+                  "cytoplasm",
+                  "extracellular_region"
+                ].includes(k)
             )
             .filter(
               //additional filter for restricting cytoplasmic nodes from entering organelle membranes
@@ -474,11 +530,11 @@ export default class CellVisualizer extends Component {
 
       // Use character length to determine hover information
       let characterLength =
-        (d.id.length < 6
-          ? d.id.length + 2
-          : d.id.length > 12
-          ? d.id.length - 2
-          : d.id.length) * 12;
+        (d.name.length < 6
+          ? d.name.length + 2
+          : d.name.length > 12
+          ? d.name.length - 2
+          : d.name.length) * 12;
 
       d3.select(this)
         .attr("cx", result.x)
@@ -536,7 +592,7 @@ export default class CellVisualizer extends Component {
             .attr("dy", "-20") // set offset y position
             .attr("text-anchor", "middle") // set anchor y justification
             .attr("id", "node" + i)
-            .text(d.id);
+            .text(d.name);
         })
         .on("mouseout", function(d, i) {
           d3.selectAll("#node" + i).remove(); // Removes the on-hover information

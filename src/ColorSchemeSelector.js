@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { Radio } from "antd";
 import * as Color from "color";
 
@@ -31,62 +31,64 @@ export class ColorSchemeSelector extends React.Component {
         );
       }
       case ColorSchemes.TYPE: {
-        const result = this.colorSchemeByDiscereteAttribute("type");
+        const result = this.colorSchemeByDiscereteAttribute("group");
         return this.props.onColorSchemeChange(
           result.colorScheme,
           result.colorSelector
         );
       }
       case ColorSchemes.CONNECTIVITY: {
-        const connectedNodes = this.props.data.links.reduce((acc, link) => {
-          acc.push(link.source.id);
-          acc.push(link.target.id);
-          return acc;
-        }, []);
+        let connectedNodes = [];
+        this.props.data.links.map(link => {
+          connectedNodes.push(link.source.id);
+          connectedNodes.push(link.target.id);
+        });
+        // connectedNodes = Array.from(connectedNodes);
         const connectionsByNode = connectedNodes.reduce((acc, node, i) => {
-          if (connectedNodes.findIndex(n => n === node) === i)
+          if (!acc[node]) {
             acc[node] = connectedNodes.filter(n => n === node).length;
+          }
           return acc;
         }, {});
+
         const relativePercentages = this.calculateRelativePercentagesForRange(
-          Object.values(connectionsByNode),
+          { ...connectionsByNode },
           "connections"
         );
         const colorScheme = this.assignMonochromaticColors(relativePercentages);
         return this.props.onColorSchemeChange(colorScheme, n => {
-          const c = connectionsByNode[n.id];
+          const c = connectionsByNode[n.id] || 0;
           return colorScheme.find(a => {
-            return c >= a.min && c < a.max;
+            return c >= a.min && c <= a.max;
           }).color;
         });
       }
       case ColorSchemes.PATHWAY: {
         const pathways = this.props.data.nodes
-          .filter(n => n.id.includes("Mme"))
-          .map(n => n.id);
+          .filter(n => n.id.includes("R-HSA"))
+          .map(n => ({ id: n.id, name: n.name }));
         const pathwayConnectedNodes = pathways.reduce((a, pathway) => {
           const nodes = this.props.data.links
             .map(l => {
-              if (l.source.id === pathway) {
+              if (l.source.id === pathway.id) {
                 return l.target.id;
               }
-              if (l.target.id === pathway) {
+              if (l.target.id === pathway.id) {
                 return l.source.id;
               }
             })
             .filter(n => n);
           return {
             ...a,
-            [pathway]: nodes
+            [pathway.id]: nodes
           };
         }, {});
         const totalPathwayConnectedNodes = Object.values(
           pathwayConnectedNodes
         ).reduce((a, c) => a + c.length, 0);
-        console.log("PATH-NODE", pathwayConnectedNodes);
         const relativePercentages = Object.keys(pathwayConnectedNodes).map(
           key => ({
-            label: key,
+            label: pathways.find(p => p.id === key).name,
             value:
               pathwayConnectedNodes[key].length / this.props.data.links.length
           })
@@ -98,14 +100,14 @@ export class ColorSchemeSelector extends React.Component {
             this.props.data.links.length
         });
         const colorScheme = this.assignColors(relativePercentages);
-        console.log("RELATIVE-PERCENTAGES", relativePercentages);
         return this.props.onColorSchemeChange(colorScheme, n => {
           let color;
           Object.keys(pathwayConnectedNodes).forEach((key, i) => {
+            const pathway = pathways.find(p => p.id === key);
             if (key === n.id) {
-              color = colorScheme.find(s => s.label === key).color;
+              color = colorScheme.find(s => s.label === n.name).color;
             } else if (pathwayConnectedNodes[key].includes(n.id))
-              color = colorScheme.find(s => s.label === key).color;
+              color = colorScheme.find(s => s.label === pathway.name).color;
           });
           if (!color)
             color = colorScheme.find(s => s.label === "No pathway").color;
@@ -113,6 +115,53 @@ export class ColorSchemeSelector extends React.Component {
         });
       }
     }
+  }
+
+  calculateRelativePercentagesForRange(connectionsByNode, caption) {
+    const relativePercentages = [];
+    const zerCount =
+      this.props.data.nodes.length - Object.values(connectionsByNode).length;
+    if (zerCount > 0) {
+      relativePercentages.push({
+        min: 0,
+        max: 0,
+        label: `No ${caption}`,
+        value: zerCount / this.props.data.nodes.length
+      });
+    }
+    const numberOfConnections = Object.values(connectionsByNode);
+
+    const min = Math.min(...numberOfConnections);
+    const max = Math.max(...numberOfConnections);
+    const range = max - min;
+    let step;
+    if (range === 0) {
+      if (max !== 0) {
+        relativePercentages.push({
+          min,
+          max: max + 1,
+          label: `${min} connections`,
+          value: numberOfConnections.length / this.props.data.nodes.length
+        });
+      }
+      return relativePercentages;
+    } else if (range < 10) {
+      step = 1;
+    } else {
+      step = Math.ceil(range / 10);
+    }
+    for (let i = min; i < max + step; i += step) {
+      relativePercentages.push({
+        min: i,
+        max: i + step,
+        label: `${i} - ${i + step} ${caption}`,
+        value:
+          numberOfConnections.filter(c => c >= i && c <= i + step).length /
+          this.props.data.nodes.length
+      });
+      i += 1;
+    }
+    return relativePercentages;
   }
 
   colorSchemeByDiscereteAttribute(attribute) {
@@ -124,7 +173,6 @@ export class ColorSchemeSelector extends React.Component {
       }
       return rp;
     });
-    console.log("RELATIVE", relativePercentages);
     const colorScheme = this.assignColors(relativePercentages);
     const colorSelector = n => {
       const cs =
@@ -146,12 +194,14 @@ export class ColorSchemeSelector extends React.Component {
 
   assignMonochromaticColors(data) {
     const sortedData = [...data].sort((a, b) => b.min - a.min);
-    let red = Color("#180205");
+    const length = sortedData.length;
+    const lightnessIncrement = 80 / length;
+    let red = Color("#100000");
     return sortedData.map(d => {
-      red = red.lighten(0.75);
+      red = red.lightness(red.lightness() + lightnessIncrement);
       return {
         ...d,
-        color: red.rgb()
+        color: red.hex()
       };
     });
   }
@@ -174,37 +224,6 @@ export class ColorSchemeSelector extends React.Component {
     }));
   }
 
-  calculateRelativePercentagesForRange(values, caption) {
-    const totalConnections = values.reduce((a, c) => a + c, 0);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min;
-    let step = 1;
-    if (range < 3) {
-      step = range;
-    } else if (range < 10) {
-      step = Math.ceil(range / 2);
-    } else {
-      step = Math.ceil(range / 5);
-    }
-    let relativePercentages = [];
-    for (let i = min; i + step <= max; i = i + step) {
-      relativePercentages.push({
-        min: i,
-        max: i + step,
-        label: `${i}-${i + step + 1} ${caption}`
-      });
-    }
-    return relativePercentages.map((rp, i) => {
-      if (i === relativePercentages.length - 1) rp.max = rp.max + 1;
-      rp.value =
-        values
-          .filter(v => v >= rp.min && v < rp.max)
-          .reduce((a, c) => a + c, 0) / totalConnections;
-      return rp;
-    });
-  }
-
   render() {
     return (
       <React.Fragment>
@@ -213,7 +232,7 @@ export class ColorSchemeSelector extends React.Component {
           defaultValue={this.state.defaultColorScheme}
         >
           <Radio value={ColorSchemes.LOCATION}>Location</Radio>
-          <Radio value={ColorSchemes.TYPE}>Type</Radio>
+          <Radio value={ColorSchemes.TYPE}>Annotation</Radio>
           <Radio value={ColorSchemes.CONNECTIVITY}>Connectivity</Radio>
           <Radio value={ColorSchemes.PATHWAY}>Pathway</Radio>
         </Radio.Group>

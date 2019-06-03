@@ -9,28 +9,24 @@ import {
   Input,
   Icon,
   Typography,
-  Upload,
   AutoComplete,
-  Statistic,
-  Card,
-  Spin,
   message,
-  Popover
+  Popover,
+  Spin,
+  Tag,
+  Drawer
 } from "antd";
-import saveSvgAsPng from "save-svg-as-png";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import { ColorPalletes, GraphSchema } from "./utils";
+import {
+  ColorPalletes,
+  GraphSchema,
+  GroupMapping,
+  CellLocations
+} from "./utils";
 import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
 
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
-// Map a group of nodes to the cellular component (organnel) they belong to and their fill color
-const GroupMapping = [
-  { component: "glyoxysome", membrane: "glyoxysome_membrane" },
-  { component: "centrosome", membrane: "centrosome_membrane" }
-];
+// pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 export class App extends Component {
   constructor(props) {
@@ -42,13 +38,16 @@ export class App extends Component {
       selectedFileList: [],
       loading: false,
       colorScheme: null,
-      colorSelector: n => "#000"
+      colorSelector: n => "#000",
+      organelleFilter: { nucleus: true },
+      collapseTopbar: false,
+      showFilters: false
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
-    this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
+    // this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
     this.handleColorSchemeChange = this.handleColorSchemeChange.bind(this);
   }
 
@@ -58,119 +57,175 @@ export class App extends Component {
       selectedFileList: [file]
     });
   }
-  handleFileUploaded(data) {
+
+  convertCytoscapeJSONtoD3(data) {
+    const d = data.elements || data;
+    return {
+      nodes: d.nodes.map(n => n.data),
+      links: d.edges.map(e => e.data)
+    };
+  }
+
+  handleFileUploaded(d) {
+    let data = typeof d === "string" ? JSON.parse(d) : d;
     GraphSchema.isValid(data).then(
       function(valid) {
-        valid ? this.setState({ data }) : message.error("Invlaid JSON file.");
+        if (valid) {
+          const d = this.generalizeLocations(data, CellLocations);
+          const organelleFilter = d.nodes.reduce((a, c) => {
+            if (!a[c.location]) a[c.location] = true;
+            return a;
+          }, {});
+          return this.setState({
+            data: d,
+            organelleFilter
+          });
+        }
+        try {
+          data = this.convertCytoscapeJSONtoD3(data);
+        } catch (err) {
+          console.error(err);
+          return message.error("Invalid JSON file.");
+        }
+        GraphSchema.isValid(data).then(
+          function(valid) {
+            if (valid) {
+              const d = this.generalizeLocations(data, CellLocations);
+              const organelleFilter = d.nodes.reduce((a, c) => {
+                if (!a[c.location]) a[c.location] = true;
+                return a;
+              }, {});
+              this.setState({
+                data: d,
+                organelleFilter
+              });
+            } else {
+              message.error("Invalid JSON file.");
+            }
+          }.bind(this)
+        );
       }.bind(this)
     );
+  }
+
+  generalizeLocations(data, locations) {
+    data.nodes = data.nodes.map(n => {
+      n.name = n.id;
+      n.originalLocation = n.location;
+      n.location = n.location.trim().replace(/\s+/g, "_");
+      n.id = `${n.name.replace(":", "_")}_${n.location}`;
+      const locationMapping = locations.find(l =>
+        l.matchers.some(m => n.location.toLowerCase().includes(m.toLowerCase()))
+      );
+      if (locationMapping) n.location = locationMapping.location;
+      return n;
+    });
+
+    data.links = data.links.map(l => {
+      l.source = data.nodes.find(n => n.name === l.source).id;
+      l.target = data.nodes.find(n => n.name === l.target).id;
+      return l;
+    });
+
+    return data;
   }
 
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
   }
 
-  handleDownloadPdf() {
-    // Sets fonts. Not working yet?
-    var fonts = {
-      Roboto: {
-        normal: "fonts/Roboto-Regular.ttf",
-        bold: "fonts/Roboto-Medium.ttf",
-        italics: "fonts/Roboto-Italic.ttf",
-        bolditalics: "fonts/Roboto-MediumItalic.ttf"
-      }
-    };
-    let prevNodeLocation = "";
-    // Copy the node's data and add it's connections
-    let sortedData = [...this.state.data.nodes];
-    sortedData.map(node => {
-      let connectedTo = [];
-      this.state.data.links.map(link => {
-        if (link.source.id == node.id) {
-          if (!connectedTo.includes(link.target.id)) {
-            connectedTo.push(link.target.id);
-          }
-        }
-        if (link.target.id == node.id) {
-          if (!connectedTo.includes(link.source.id)) {
-            connectedTo.push(link.source.id);
-          }
-        }
-      });
-      node.connectedTo = connectedTo;
-    });
-    // Sort the node's data first by Group and then by connected nodes
-    sortedData.sort((a, b) => {
-      return (
-        a.location.localeCompare(b.location) ||
-        b.connectedTo.length - a.connectedTo.length
-      );
-    });
-    // Get the svg and return it's URI
-    saveSvgAsPng
-      .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
-      .then(uri => {
-        // Used to set the PDF's content
-        var docDefinition = {
-          content: [
-            {
-              image: uri
-            },
-            // Create content for each node
-            sortedData.map(node => {
-              let nodeInfo = [
-                {
-                  // Show title for a new organelle
-                  text:
-                    prevNodeLocation != node.location
-                      ? node.location
-                      : undefined,
-                  bold: true,
-                  margin:
-                    prevNodeLocation != node.location
-                      ? [5, 12, 10, 20]
-                      : [0, 0, 0, 0],
-                  pageBreak:
-                    prevNodeLocation != node.location ? "before" : undefined
-                },
-                {
-                  style: "tableExample",
-                  table: {
-                    body: [
-                      ["Name", node.id],
-                      ["Description", "" + node.description],
-                      [
-                        `Connected to (${node.connectedTo.length})`,
-                        node.connectedTo.join(", ")
-                      ]
-                    ]
-                  },
-                  margin: [5, 2, 10, 20]
-                }
-              ];
-              if (prevNodeLocation != node.location) {
-                prevNodeLocation = node.location;
-              }
-              return nodeInfo;
-            })
-          ]
-        };
-        // Download the PDF file
-        pdfMake.createPdf(docDefinition).download();
-      });
-  }
+  // handleDownloadPdf() {
+  //   let prevNodeLocation = "";
+  //   // Copy the node's data and add it's connections
+  //   let sortedData = [...this.state.data.nodes];
+  //   sortedData.map(node => {
+  //     let connectedTo = [];
+  //     this.state.data.links.map(link => {
+  //       if (link.source.id == node.id) {
+  //         if (!connectedTo.includes(link.target.id)) {
+  //           connectedTo.push(link.target.id);
+  //         }
+  //       }
+  //       if (link.target.id == node.id) {
+  //         if (!connectedTo.includes(link.source.id)) {
+  //           connectedTo.push(link.source.id);
+  //         }
+  //       }
+  //     });
+  //     node.connectedTo = connectedTo;
+  //   });
+  //   // Sort the node's data first by Group and then by connected nodes
+  //   sortedData.sort((a, b) => {
+  //     return (
+  //       a.location.localeCompare(b.location) ||
+  //       b.connectedTo.length - a.connectedTo.length
+  //     );
+  //   });
+  //   // Get the svg and return it's URI
+  //   saveSvgAsPng
+  //     .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
+  //     .then(uri => {
+  //       // Used to set the PDF's content
+  //       var docDefinition = {
+  //         content: [
+  //           {
+  //             image: uri
+  //           },
+  //           // Create content for each node
+  //           sortedData.map(node => {
+  //             let nodeInfo = [
+  //               {
+  //                 // Show title for a new organelle
+  //                 text:
+  //                   prevNodeLocation != node.location
+  //                     ? node.location
+  //                     : undefined,
+  //                 bold: true,
+  //                 margin:
+  //                   prevNodeLocation != node.location
+  //                     ? [5, 12, 10, 20]
+  //                     : [0, 0, 0, 0],
+  //                 pageBreak:
+  //                   prevNodeLocation != node.location ? "before" : undefined
+  //               },
+  //               {
+  //                 style: "tableExample",
+  //                 table: {
+  //                   body: [
+  //                     ["Name", node.id],
+  //                     ["Description", "" + node.description],
+  //                     [
+  //                       `Connected to (${node.connectedTo.length})`,
+  //                       node.connectedTo.join(", ")
+  //                     ]
+  //                   ]
+  //                 },
+  //                 margin: [5, 2, 10, 20]
+  //               }
+  //             ];
+  //             if (prevNodeLocation != node.location) {
+  //               prevNodeLocation = node.location;
+  //             }
+  //             return nodeInfo;
+  //           })
+  //         ]
+  //       };
+  //       // Download the PDF file
+  //       pdfMake.createPdf(docDefinition).download();
+  //     });
+  // }
 
   renderVisualization() {
     return (
       <div className="visualization-wrapper">
         <CellVisualizer
-          selectedNode={this.state.selectedNode}
-          groupMapping={GroupMapping}
           data={this.state.data}
+          groupMapping={GroupMapping}
+          selectedNode={this.state.selectedNode}
           onNodeSelected={this.handleNodeSelected}
-          colorPalletes={ColorPalletes}
           updateLoadingStatus={loading => this.setState({ loading })}
           colorSelector={this.state.colorSelector}
+          organelleFilter={this.state.organelleFilter}
         />
         {this.state.selectedNode && (
           <OrganelleDescription
@@ -209,7 +264,7 @@ export class App extends Component {
   renderFloatingActionButtons() {
     return (
       <div className="floating-action-buttons-wrapper">
-        <Button
+        {/* <Button
           id="download_pdf"
           icon="file-pdf"
           size={"large"}
@@ -217,7 +272,7 @@ export class App extends Component {
           shape="round"
           className="floating-action-button"
           onClick={this.handleDownloadPdf}
-        />
+        /> */}
 
         <Button
           id="download"
@@ -236,35 +291,57 @@ export class App extends Component {
       <Fragment>
         <div className="top-bar-wrapper">
           <div className="menu">
-            <FileUpload
-              title={this.state.selectedFile.name}
-              fileList={this.state.selectedFileList}
-              onFileUploaded={this.handleFileUploaded}
-              handleFileList={this.handleUploadedFileList}
-            />
-            <Button.Group size="large">
-              <Button type="primary" icon="filter" />
-              <Popover content={<p>Controls</p>} title="Title" trigger="click">
-                <Button type="primary" icon="control" />
-              </Popover>
-            </Button.Group>
-            <AutoComplete
-              dataSource={this.state.data.nodes.map(d => d.id)}
-              placeholder="Search ..."
-              onSelect={selectedId => {
-                this.handleNodeSelected(
-                  this.state.data.nodes.find(n => n.id === selectedId)
-                );
-              }}
-              filterOption={(inputValue, option) =>
-                option.props.children
-                  .toUpperCase()
-                  .indexOf(inputValue.toUpperCase()) !== -1
+            {this.state.collapseTopbar || (
+              <Fragment>
+                <FileUpload
+                  title={this.state.selectedFile.name}
+                  fileList={this.state.selectedFileList}
+                  onFileUploaded={this.handleFileUploaded}
+                  handleFileList={this.handleUploadedFileList}
+                />
+                <Button.Group size="large">
+                  <Button
+                    type="primary"
+                    icon="filter"
+                    onClick={e => this.setState({ showFilters: true })}
+                  />
+                  <Popover
+                    content={<p>Controls</p>}
+                    title="Title"
+                    trigger="click"
+                  />
+                </Button.Group>
+                <AutoComplete
+                  dataSource={this.state.data.nodes.map(d => d.id)}
+                  placeholder="Search ..."
+                  onSelect={selectedId => {
+                    this.handleNodeSelected(
+                      this.state.data.nodes.find(n => n.id === selectedId)
+                    );
+                  }}
+                  filterOption={(inputValue, option) =>
+                    option.props.children
+                      .toUpperCase()
+                      .indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                >
+                  <Input
+                    suffix={<Icon type="search" className="search-icon" />}
+                  />
+                </AutoComplete>
+              </Fragment>
+            )}
+            <Button
+              type="primary"
+              icon={this.state.collapseTopbar ? "right" : "left"}
+              className="fold-toggle"
+              onClick={e =>
+                this.setState(state => ({
+                  ...state,
+                  collapseTopbar: !state.collapseTopbar
+                }))
               }
-            >
-              <Input suffix={<Icon type="search" className="search-icon" />} />
-            </AutoComplete>
-            <Button type="primary" icon="left" className="fold-toggle" />
+            />
           </div>
         </div>
       </Fragment>
@@ -295,6 +372,34 @@ export class App extends Component {
     this.setState({ colorScheme, colorSelector });
   }
 
+  renderOrganelleFilter() {
+    if (this.state.organelleFilter) {
+      return (
+        <div>
+          {Object.keys(this.state.organelleFilter).map(key => (
+            <Tag.CheckableTag
+              style={{ margin: 5 }}
+              key={key}
+              checked={this.state.organelleFilter[key]}
+              title={key || "Unlocalized"}
+              onChange={checked =>
+                this.setState(state => ({
+                  ...state,
+                  organelleFilter: {
+                    ...state.organelleFilter,
+                    [key]: checked
+                  }
+                }))
+              }
+            >
+              {key || "Unlocalized"}
+            </Tag.CheckableTag>
+          ))}
+        </div>
+      );
+    }
+  }
+
   render() {
     return (
       <Fragment>
@@ -303,13 +408,33 @@ export class App extends Component {
             {this.renderFloatingActionButtons()}
             {this.renderTopBar()}
             {this.renderVisualization()}
-            <div style={{ position: "absolute", top: 120, left: 15 }}>
+            <div className="toolbox color-scheme-selector">
+              <p style={{ fontWeight: "bold", marginBottom: 5, color: "#000" }}>
+                Color scheme
+              </p>
               <ColorSchemeSelector
                 data={this.state.data}
                 colorPalletes={ColorPalletes}
                 onColorSchemeChange={this.handleColorSchemeChange}
               />
             </div>
+            <Drawer
+              title={
+                <span>
+                  <Icon type="filter" style={{ marginRight: 15 }} />
+                  Filters
+                </span>
+              }
+              onClose={e => this.setState({ showFilters: false })}
+              visible={this.state.showFilters}
+              width={300}
+              placement="left"
+            >
+              <p style={{ fontWeight: "bold", marginBottom: 5, color: "#000" }}>
+                Organelle filter
+              </p>
+              {this.renderOrganelleFilter()}
+            </Drawer>
           </Fragment>
         ) : (
           this.renderLandingPage()

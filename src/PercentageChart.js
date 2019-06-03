@@ -67,7 +67,7 @@ export class PercentageChart extends Component {
         div
           .html(`${d.label} (${(d.value * 100).toFixed(2)}% )`)
           .style("left", d3.event.pageX - this.props.height + "px")
-          .style("bottom", this.props.height + 30 + "px");
+          .style("bottom", this.props.height + 15 + "px");
       })
       .on("mouseout", function(d) {
         div

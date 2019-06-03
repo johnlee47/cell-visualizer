@@ -7,18 +7,22 @@ export default class OrganelleDescription extends React.Component {
 
     return (
       selectedNode && (
-        <Card bordered={false} className="description-wrapper">
-          <Typography.Title level={4}>{selectedNode.id}</Typography.Title>
+        <div className="description-wrapper">
+          <Typography.Title level={4}>{selectedNode.name}</Typography.Title>
+
           <Typography.Paragraph>
-            {selectedNode.description}
+            <span style={{ fontWeight: "bold" }}>Location: </span>
+            {selectedNode.originalLocation || "Unlocalized"}
           </Typography.Paragraph>
-          <Button.Group>
+
+          <Typography.Paragraph>{selectedNode.definition}</Typography.Paragraph>
+          <div className="actions">
             <Button type="link" ghost onClick={() => onNodeSelected(undefined)}>
               Close
             </Button>
-            <Button type="primary">Learn more</Button>
-          </Button.Group>
-        </Card>
+            {/* <Button type="primary">Learn more</Button> */}
+          </div>
+        </div>
       )
     );
   }

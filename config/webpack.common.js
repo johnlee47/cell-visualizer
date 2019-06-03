@@ -1,12 +1,26 @@
 const webpack = require("webpack");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = {
   entry: path.join(__dirname, "..", "src", "index.js"),
   output: {
     path: path.resolve(__dirname, "../dist"),
     filename: "bundle.js"
+  },
+  optimization: {
+    minimizer: [
+      new UglifyJsPlugin({
+        uglifyOptions: {
+          output: {
+            comments: false
+          }
+        }
+      }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
   },
   module: {
     rules: [
@@ -23,7 +37,7 @@ module.exports = {
           loader: "babel-loader"
         }
       },
-      { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+
       {
         test: /\.css$/,
         use: [{ loader: "style-loader" }, { loader: "css-loader" }]
@@ -42,15 +56,7 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      "process.env": {
-        SERVICE_ADDR: JSON.stringify(process.env.SERVICE_ADDR)
-      }
-    }),
-    new HtmlWebpackPlugin({ template: "./src/index.html" })
-  ],
-  devtool: "source-map",
+  plugins: [new HtmlWebpackPlugin({ template: "./src/index.html" })],
   resolve: {
     extensions: [".js", ".jsx", ".json"]
   }

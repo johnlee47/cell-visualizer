@@ -96,7 +96,9 @@ div.tooltip {
 
 .top-bar-wrapper .menu .ant-select-selection__placeholder,
 .top-bar-wrapper .menu .search-icon,
-.top-bar-wrapper .menu .ant-select-search__field__mirror {
+.top-bar-wrapper .menu .ant-select-search__field__mirror,
+.top-bar-wrapper .ant-select-search__field.ant-input-affix-wrapper,
+.top-bar-wrapper .ant-select-search__field.ant-input-affix-wrapper ant-input {
   color: #e6f7ff;
 }
 
@@ -104,8 +106,8 @@ div.tooltip {
   border: none;
 }
 
-.top-bar-wrapper .menu .fold-toggle {
-  margin-left: 30px;
+.top-bar-wrapper .menu .ant-select {
+  margin-right: 15px;
 }
 
 .top-bar-wrapper .extra {
@@ -116,23 +118,35 @@ div.tooltip {
 
 .description-wrapper {
   position: absolute;
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px;
   width: 300px;
   right: 15px;
   top: 15px;
   background-color: #096dd9;
+  padding-bottom: 30px;
+  border-radius: 10px;
 }
 
 .description-wrapper .ant-typography {
   color: #fff;
+  padding: 5px 15px;
 }
 
-.description-wrapper .ant-btn-group {
+.description-wrapper .actions {
   float: right;
+  margin-right: 15px;
 }
 
 .description-wrapper .ant-btn-link {
   border: none;
+}
+
+.description-wrapper h4.ant-typography {
+  padding: 10px 15px 5px 15px;
+  background-color: #1890ff;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  font-size: 1.1rem;
 }
 
 .loader-wrapper {
@@ -149,7 +163,7 @@ div.tooltip {
 }
 
 .loader-wrapper .content {
-  padding: 15px;
+  padding: 10px 15px;
   border-radius: 10px;
   background-color: #fff;
 }
@@ -170,7 +184,7 @@ div.tooltip {
   stroke-width: 0.7;
 }
 
-#extracellular {
+#extracellular_region {
   fill: #edecfc;
   stroke-width: 0;
 }
@@ -188,7 +202,41 @@ div.tooltip {
 }
 
 .group_component circle {
-  fill: #f6ebf9;
+  fill: #fff;
   stroke: #d29be3;
   stroke-width: 1;
+}
+
+.group_component circle.membrane {
+  fill: #f6ebf9;
+}
+
+.group_component text {
+  fill: #74278c;
+  font-size: 0.7rem;
+  text-anchor: middle;
+}
+
+.toolbox {
+  padding: 5px 15px;
+  background-color: #ffffffaa;
+  border-radius: 10px;
+}
+
+.toolbox h4.ant-typography {
+  font-size: 1rem;
+}
+
+.color-scheme-selector {
+  position: absolute;
+  top: 90px;
+  left: 15px;
+}
+
+.hidden.group_component,
+.hidden.node,
+.hidden.edge {
+  opacity: 0;
+  fill-opacity: 0;
+  stroke-opacity: 0;
 }
