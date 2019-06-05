@@ -26,6 +26,7 @@ import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
 
+
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 export class App extends Component {
@@ -34,6 +35,7 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
+      selectedOrganelle: undefined,
       selectedFile: null,
       selectedFileList: [],
       loading: false,
@@ -45,6 +47,7 @@ export class App extends Component {
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
+    this.handleOrganelleSelected = this.handleOrganelleSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     // this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
@@ -56,6 +59,10 @@ export class App extends Component {
       selectedFile: file,
       selectedFileList: [file]
     });
+  }
+
+  handleOrganelleSelected(organelle) {
+    this.setState({ selectedOrganelle: organelle});
   }
 
   convertCytoscapeJSONtoD3(data) {
@@ -218,15 +225,26 @@ export class App extends Component {
   renderVisualization() {
     return (
       <div className="visualization-wrapper">
-        <CellVisualizer
-          data={this.state.data}
-          groupMapping={GroupMapping}
+        {!this.state.selectedOrganelle && (<CellVisualizer
           selectedNode={this.state.selectedNode}
+          onOrganelleSelected={this.handleOrganelleSelected}
+          groupMapping={GroupMapping}
+          data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
           updateLoadingStatus={loading => this.setState({ loading })}
           colorSelector={this.state.colorSelector}
           organelleFilter={this.state.organelleFilter}
         />
+        )}
+
+        {this.state.selectedOrganelle && (<Mitochondria
+          selectedOrganelle={this.state.selectedOrganelle}
+          onOrganelleSelected={this.handleOrganelleSelected}
+          onNodeSelected={this.handleNodeSelected}
+          data={this.state.data}
+        />
+        )}
+
         {this.state.selectedNode && (
           <OrganelleDescription
             selectedNode={this.state.selectedNode}

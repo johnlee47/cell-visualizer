@@ -484,6 +484,11 @@ export default class CellVisualizer extends Component {
       );
     });
 
+    d3.select("#mitochondrion").on("click", function (d) {
+      // console.log(d.id);
+      this.props.onOrganelleSelected("mitochondrion");
+    }.bind(this));
+
     this.simulation.on("tick", this.onTick.bind(this));
   }
 
