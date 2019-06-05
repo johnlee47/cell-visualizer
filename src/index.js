@@ -13,6 +13,7 @@ import * as bg from "./home.svg";
 import saveSvgAsPng from "save-svg-as-png";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import Mitochondria from "./Mitochondria";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 // Map a group of nodes to the cellular component (organnel) they belong to and their fill color
@@ -27,12 +28,14 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
+      selectedOrganelle: undefined,
       selectedFile: null,
       selectedFileList: [],
       size: "large"
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
+    this.handleOrganelleSelected = this.handleOrganelleSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
@@ -52,6 +55,9 @@ export class App extends Component {
 
   handleNodeSelected(node) {
     this.setState({ selectedNode: node });
+  }
+  handleOrganelleSelected(organelle) {
+    this.setState({ selectedOrganelle: organelle});
   }
 
   handleDownloadPdf() {
@@ -173,12 +179,22 @@ export class App extends Component {
           flexDirection: "column"
         }}
       >
-        <CellVisualizer
+        {!this.state.selectedOrganelle && (<CellVisualizer
           selectedNode={this.state.selectedNode}
+          onOrganelleSelected={this.handleOrganelleSelected}
           groupMapping={GroupMapping}
           data={this.state.data}
           onNodeSelected={this.handleNodeSelected}
         />
+        )}
+
+        {this.state.selectedOrganelle && (<Mitochondria
+          selectedOrganelle={this.state.selectedOrganelle}
+          onOrganelleSelected={this.handleOrganelleSelected}
+          onNodeSelected={this.handleNodeSelected}
+          data={this.state.data}
+        />
+        )}
 
         {this.state.selectedNode && (
           <OrganelleDescription
