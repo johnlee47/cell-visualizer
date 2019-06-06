@@ -29,6 +29,12 @@ import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
 import * as bg from "./bg.svg";
 import Mitochondria from "./Mitochondria";
+import posed from "react-pose";
+
+const Box = posed.div({
+  visible: { opacity: 1 },
+  hidden: { opacity: 0 }
+});
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -224,8 +230,8 @@ export class App extends Component {
           >
             Gene annotation visualizer with intracellular location
             representation. Visit the{" "}
-            <a href="https://mozi.ai:3003">annotation service</a> page to
-            annotate genes and get a graph JSON.
+            <a href="http://mozi.ai:3003">annotation service</a> page to
+            annotate genes and get a graph JSON. Upload the graph JSON below.
           </Typography.Paragraph>
           <FileUpload
             title="Click or drag graph file to this area"
@@ -325,13 +331,6 @@ export class App extends Component {
               }
             />
           </div>
-          {/* <div className="navigation">
-            <Tag.CheckableTag>Cell</Tag.CheckableTag>
-            <Icon type="right" style={{ marginRight: 10 }} />
-            <Tag.CheckableTag>Mitochondrion</Tag.CheckableTag>
-            <Icon type="right" style={{ marginRight: 10 }} />
-            <Tag.CheckableTag checked>Mitochondrial ribosome</Tag.CheckableTag>
-          </div> */}
         </div>
       </Fragment>
     );
@@ -408,6 +407,21 @@ export class App extends Component {
             )}
 
             <div className="toolbox color-scheme-selector">
+              {this.state.selectedOrganelle && (
+                <div className="navigation">
+                  <Tag.CheckableTag
+                    onChange={e =>
+                      this.setState({ selectedOrganelle: undefined })
+                    }
+                  >
+                    Cell
+                  </Tag.CheckableTag>
+                  <Icon type="right" style={{ marginRight: 10 }} />
+                  <Tag.CheckableTag checked>
+                    {this.state.selectedOrganelle}
+                  </Tag.CheckableTag>
+                </div>
+              )}
               <p style={{ fontWeight: "bold", marginBottom: 5, color: "#000" }}>
                 Color scheme
               </p>

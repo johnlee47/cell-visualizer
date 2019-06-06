@@ -13,7 +13,7 @@ export default class Mitochondria extends React.Component {
     this.initMitochondria();
   }
 
-  componentDidUpdate(){
+  componentDidUpdate() {
     if (this.node) this.node.attr("fill", d => this.props.colorSelector(d));
   }
 
@@ -24,19 +24,11 @@ export default class Mitochondria extends React.Component {
 
     for (let i = 0; i < numberOfNodes; i++) {
       let { x, y } = path.getPointAtLength((pathLength * i) / numberOfNodes);
-      const { id, name, description, originalLocation } = components[
-        i
-      ];
-
       let pos = {
         x,
         y,
-        id,
-        name,
-        description,
-        originalLocation
+        ...components[i]
       };
-
       pts.push(pos);
     }
 
@@ -90,13 +82,9 @@ export default class Mitochondria extends React.Component {
         // Text description
         d3.select("svg#mitochondrion")
           .append("text")
-          .style("font-size", "16px")
-          .style("font-weight", "600")
-          .style("fill", "white")
           .attr("x", mouse[0])
           .attr("y", mouse[1])
           .attr("dy", "-20")
-          .attr("text-anchor", "middle")
           .attr("id", "node" + i)
           .text(d.name)
           .classed("tooltip", true);
@@ -107,7 +95,7 @@ export default class Mitochondria extends React.Component {
   }
 
   initMitochondria() {
-    let newPoints = [];   // array of new locations within organelle
+    let newPoints = []; // array of new locations within organelle
     let nodesInOrganelle = [];
     let linksInOrganelle = [];
 
@@ -136,7 +124,7 @@ export default class Mitochondria extends React.Component {
 
       let path = d3.select(`#${organelleMapping[part]}`).node();
       let points = this.getPointsOnPath(path, components);
-      
+
       newPoints.push(...points);
       nodesInOrganelle.push(...components);
     });
@@ -165,7 +153,6 @@ export default class Mitochondria extends React.Component {
         return d.id;
       })
       .each(function(d) {
-        console.log("new points:", newPoints);
         const sourcePosition = newPoints.find(node => node.id == d.source.id);
         const targetPosition = newPoints.find(node => node.id == d.target.id);
 
@@ -182,11 +169,10 @@ export default class Mitochondria extends React.Component {
 
     return (
       <div>
-        <button onClick={() => onOrganelleSelected(undefined)}>CLOSE</button>
         <svg
           id="mitochondrion"
           width={window.innerHeight}
-          height={window.innerHeight - 150}
+          height={window.innerHeight - 120}
           viewBox="0 0 778 796"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
