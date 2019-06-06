@@ -178,6 +178,7 @@ export class App extends Component {
             selectedOrganelle={this.state.selectedOrganelle}
             onOrganelleSelected={this.handleOrganelleSelected}
             onNodeSelected={this.handleNodeSelected}
+            colorSelector={this.state.colorSelector}
             data={this.state.data}
             toggleDisplay={this.toggleDisplay}
           />
