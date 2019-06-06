@@ -1,3 +1,11 @@
+.isActive {
+  display: initial;
+}
+
+.isNotActive {
+  display: none;
+}
+
 div.tooltip {
   position: absolute;
   text-align: center;
@@ -161,7 +169,7 @@ div.tooltip {
   height: 100vh;
   top: 0;
   left: 0;
-  background: #bae7ffaa;
+  background: #ffffffdd;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -235,7 +243,7 @@ div.tooltip {
 
 .color-scheme-selector {
   position: absolute;
-  top: 120px;
+  top: 90px;
   left: 15px;
 }
 

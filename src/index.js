@@ -28,6 +28,7 @@ import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
 import * as bg from "./bg.svg";
+import Mitochondria from "./Mitochondria";
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -37,6 +38,7 @@ export class App extends Component {
     this.state = {
       data: undefined,
       selectedNode: undefined,
+      selectedOrganelle: undefined,
       selectedFile: null,
       selectedFileList: [],
       loading: false,
@@ -48,10 +50,12 @@ export class App extends Component {
     };
 
     this.handleNodeSelected = this.handleNodeSelected.bind(this);
+    this.handleOrganelleSelected = this.handleOrganelleSelected.bind(this);
     this.handleFileUploaded = this.handleFileUploaded.bind(this);
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     // this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
     this.handleColorSchemeChange = this.handleColorSchemeChange.bind(this);
+    this.isOrganelleShown = this.isOrganelleShown.bind(this);
   }
 
   handleUploadedFileList(file) {
@@ -59,6 +63,10 @@ export class App extends Component {
       selectedFile: file,
       selectedFileList: [file]
     });
+  }
+
+  handleOrganelleSelected(organelle) {
+    this.setState({ selectedOrganelle: organelle });
   }
 
   convertCytoscapeJSONtoD3(data) {
@@ -137,18 +145,50 @@ export class App extends Component {
     this.setState({ selectedNode: node });
   }
 
+  isOrganelleShown(organelle) {
+    return this.state.selectedOrganelle === organelle;
+  }
+
   renderVisualization() {
     return (
       <div className="visualization-wrapper">
-        <CellVisualizer
-          data={this.state.data}
-          groupMapping={GroupMapping}
-          selectedNode={this.state.selectedNode}
-          onNodeSelected={this.handleNodeSelected}
-          updateLoadingStatus={loading => this.setState({ loading })}
-          colorSelector={this.state.colorSelector}
-          organelleFilter={this.state.organelleFilter}
-        />
+        <div
+          className={
+            this.isOrganelleShown(undefined) ? "isActive" : "isNotActive"
+          }
+        >
+          <CellVisualizer
+            selectedNode={this.state.selectedNode}
+            onOrganelleSelected={this.handleOrganelleSelected}
+            groupMapping={GroupMapping}
+            data={this.state.data}
+            onNodeSelected={this.handleNodeSelected}
+            updateLoadingStatus={loading => this.setState({ loading })}
+            colorSelector={this.state.colorSelector}
+            organelleFilter={this.state.organelleFilter}
+          />
+        </div>
+
+        <div
+          className={
+            this.isOrganelleShown("mitochondrion") ? "isActive" : "isNotActive"
+          }
+        >
+          <Mitochondria
+            selectedOrganelle={this.state.selectedOrganelle}
+            onOrganelleSelected={this.handleOrganelleSelected}
+            onNodeSelected={this.handleNodeSelected}
+            data={this.state.data}
+            toggleDisplay={this.toggleDisplay}
+          />
+        </div>
+
+        {this.state.selectedNode && (
+          <OrganelleDescription
+            selectedNode={this.state.selectedNode}
+            onNodeSelected={this.handleNodeSelected}
+          />
+        )}
         {this.state.colorScheme && (
           <div className="percentage-chart-wrapper">
             <PercentageChart
@@ -181,10 +221,10 @@ export class App extends Component {
           <Typography.Paragraph
             style={{ textAlign: "left", alignItems: "left", marginBottom: 45 }}
           >
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat.
+            Gene annotation visualizer with intracellular location
+            representation. Visit the{" "}
+            <a href="https://mozi.ai:3003">annotation service</a> page to
+            annotate genes and get a graph JSON.
           </Typography.Paragraph>
           <FileUpload
             title="Click or drag graph file to this area"
@@ -284,13 +324,13 @@ export class App extends Component {
               }
             />
           </div>
-          <div className="navigation">
+          {/* <div className="navigation">
             <Tag.CheckableTag>Cell</Tag.CheckableTag>
             <Icon type="right" style={{ marginRight: 10 }} />
             <Tag.CheckableTag>Mitochondrion</Tag.CheckableTag>
             <Icon type="right" style={{ marginRight: 10 }} />
             <Tag.CheckableTag checked>Mitochondrial ribosome</Tag.CheckableTag>
-          </div>
+          </div> */}
         </div>
       </Fragment>
     );
@@ -305,12 +345,14 @@ export class App extends Component {
             indicator={
               <Icon
                 type="loading"
-                style={{ fontSize: 24, marginRight: 15 }}
+                style={{ fontSize: 42, marginRight: 30 }}
                 spin
               />
             }
           />
-          <Typography.Text strong>Running visualization ...</Typography.Text>
+          <Typography.Text style={{ fontSize: 18 }}>
+            Running visualization ...
+          </Typography.Text>
         </div>
       </div>
     );
