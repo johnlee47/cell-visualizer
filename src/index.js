@@ -14,7 +14,9 @@ import {
   Popover,
   Spin,
   Tag,
-  Drawer
+  Drawer,
+  Card,
+  Breadcrumb
 } from "antd";
 import {
   ColorPalletes,
@@ -25,6 +27,7 @@ import {
 import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
+import * as bg from "./bg.svg";
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -134,87 +137,6 @@ export class App extends Component {
     this.setState({ selectedNode: node });
   }
 
-  // handleDownloadPdf() {
-  //   let prevNodeLocation = "";
-  //   // Copy the node's data and add it's connections
-  //   let sortedData = [...this.state.data.nodes];
-  //   sortedData.map(node => {
-  //     let connectedTo = [];
-  //     this.state.data.links.map(link => {
-  //       if (link.source.id == node.id) {
-  //         if (!connectedTo.includes(link.target.id)) {
-  //           connectedTo.push(link.target.id);
-  //         }
-  //       }
-  //       if (link.target.id == node.id) {
-  //         if (!connectedTo.includes(link.source.id)) {
-  //           connectedTo.push(link.source.id);
-  //         }
-  //       }
-  //     });
-  //     node.connectedTo = connectedTo;
-  //   });
-  //   // Sort the node's data first by Group and then by connected nodes
-  //   sortedData.sort((a, b) => {
-  //     return (
-  //       a.location.localeCompare(b.location) ||
-  //       b.connectedTo.length - a.connectedTo.length
-  //     );
-  //   });
-  //   // Get the svg and return it's URI
-  //   saveSvgAsPng
-  //     .svgAsPngUri(document.getElementById("svg"), { scale: 0.55 })
-  //     .then(uri => {
-  //       // Used to set the PDF's content
-  //       var docDefinition = {
-  //         content: [
-  //           {
-  //             image: uri
-  //           },
-  //           // Create content for each node
-  //           sortedData.map(node => {
-  //             let nodeInfo = [
-  //               {
-  //                 // Show title for a new organelle
-  //                 text:
-  //                   prevNodeLocation != node.location
-  //                     ? node.location
-  //                     : undefined,
-  //                 bold: true,
-  //                 margin:
-  //                   prevNodeLocation != node.location
-  //                     ? [5, 12, 10, 20]
-  //                     : [0, 0, 0, 0],
-  //                 pageBreak:
-  //                   prevNodeLocation != node.location ? "before" : undefined
-  //               },
-  //               {
-  //                 style: "tableExample",
-  //                 table: {
-  //                   body: [
-  //                     ["Name", node.id],
-  //                     ["Description", "" + node.description],
-  //                     [
-  //                       `Connected to (${node.connectedTo.length})`,
-  //                       node.connectedTo.join(", ")
-  //                     ]
-  //                   ]
-  //                 },
-  //                 margin: [5, 2, 10, 20]
-  //               }
-  //             ];
-  //             if (prevNodeLocation != node.location) {
-  //               prevNodeLocation = node.location;
-  //             }
-  //             return nodeInfo;
-  //           })
-  //         ]
-  //       };
-  //       // Download the PDF file
-  //       pdfMake.createPdf(docDefinition).download();
-  //     });
-  // }
-
   renderVisualization() {
     return (
       <div className="visualization-wrapper">
@@ -227,12 +149,6 @@ export class App extends Component {
           colorSelector={this.state.colorSelector}
           organelleFilter={this.state.organelleFilter}
         />
-        {this.state.selectedNode && (
-          <OrganelleDescription
-            selectedNode={this.state.selectedNode}
-            onNodeSelected={this.handleNodeSelected}
-          />
-        )}
         {this.state.colorScheme && (
           <div className="percentage-chart-wrapper">
             <PercentageChart
@@ -248,17 +164,42 @@ export class App extends Component {
 
   renderLandingPage() {
     return (
-      <div className="landing-page-wrapper">
-        <Typography.Title level={1}>Cell Visualizer</Typography.Title>
-        <FileUpload
-          title="Click or drag graph file to this area"
-          hint="Upload a graph JSON file to view it in the cell visualizer."
-          fileList={this.state.selectedFileList}
-          onFileUploaded={this.handleFileUploaded}
-          handleFileList={this.handleUploadedFileList}
-        />
+      <div
+        className="landing-page-wrapper"
+        style={{ background: `url(${bg})` }}
+      >
+        <div
+          style={{
+            textAlign: "justify",
+            maxWidth: 500,
+            justifyContent: "flex-start"
+          }}
+        >
+          <Typography.Title style={{ textAlign: "left" }} level={1}>
+            Cell Visualizer
+          </Typography.Title>
+          <Typography.Paragraph
+            style={{ textAlign: "left", alignItems: "left", marginBottom: 45 }}
+          >
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat.
+          </Typography.Paragraph>
+          <FileUpload
+            title="Click or drag graph file to this area"
+            hint="Upload a graph JSON file to view it in the cell visualizer."
+            fileList={this.state.selectedFileList}
+            onFileUploaded={this.handleFileUploaded}
+            handleFileList={this.handleUploadedFileList}
+          />
+        </div>
       </div>
     );
+  }
+
+  isOrganelleSelected(organelle) {
+    return this.state.selectedOrganelle === organelle;
   }
 
   renderFloatingActionButtons() {
@@ -343,6 +284,13 @@ export class App extends Component {
               }
             />
           </div>
+          <div className="navigation">
+            <Tag.CheckableTag>Cell</Tag.CheckableTag>
+            <Icon type="right" style={{ marginRight: 10 }} />
+            <Tag.CheckableTag>Mitochondrion</Tag.CheckableTag>
+            <Icon type="right" style={{ marginRight: 10 }} />
+            <Tag.CheckableTag checked>Mitochondrial ribosome</Tag.CheckableTag>
+          </div>
         </div>
       </Fragment>
     );
@@ -408,6 +356,14 @@ export class App extends Component {
             {this.renderFloatingActionButtons()}
             {this.renderTopBar()}
             {this.renderVisualization()}
+
+            {this.state.selectedNode && (
+              <OrganelleDescription
+                selectedNode={this.state.selectedNode}
+                onNodeSelected={this.handleNodeSelected}
+              />
+            )}
+
             <div className="toolbox color-scheme-selector">
               <p style={{ fontWeight: "bold", marginBottom: 5, color: "#000" }}>
                 Color scheme
