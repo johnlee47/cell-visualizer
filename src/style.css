@@ -1,3 +1,11 @@
+.isActive {
+  display: initial;
+}
+
+.isNotActive {
+  display: none;
+}
+
 div.tooltip {
   position: absolute;
   text-align: center;
