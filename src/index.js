@@ -25,7 +25,7 @@ import {
 import "antd/dist/antd.css";
 import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
-
+import Mitochondria from "./Mitochondria";
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -52,6 +52,7 @@ export class App extends Component {
     this.handleUploadedFileList = this.handleUploadedFileList.bind(this);
     // this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
     this.handleColorSchemeChange = this.handleColorSchemeChange.bind(this);
+    this.isOrganelleShown = this.isOrganelleShown.bind(this);
   }
 
   handleUploadedFileList(file) {
@@ -62,7 +63,7 @@ export class App extends Component {
   }
 
   handleOrganelleSelected(organelle) {
-    this.setState({ selectedOrganelle: organelle});
+    this.setState({ selectedOrganelle: organelle });
   }
 
   convertCytoscapeJSONtoD3(data) {
@@ -222,28 +223,43 @@ export class App extends Component {
   //     });
   // }
 
+  isOrganelleShown(organelle) {
+    return this.state.selectedOrganelle === organelle;
+  }
+
   renderVisualization() {
     return (
       <div className="visualization-wrapper">
-        {!this.state.selectedOrganelle && (<CellVisualizer
-          selectedNode={this.state.selectedNode}
-          onOrganelleSelected={this.handleOrganelleSelected}
-          groupMapping={GroupMapping}
-          data={this.state.data}
-          onNodeSelected={this.handleNodeSelected}
-          updateLoadingStatus={loading => this.setState({ loading })}
-          colorSelector={this.state.colorSelector}
-          organelleFilter={this.state.organelleFilter}
-        />
-        )}
+        <div
+          className={
+            this.isOrganelleShown(undefined) ? "isActive" : "isNotActive"
+          }
+        >
+          <CellVisualizer
+            selectedNode={this.state.selectedNode}
+            onOrganelleSelected={this.handleOrganelleSelected}
+            groupMapping={GroupMapping}
+            data={this.state.data}
+            onNodeSelected={this.handleNodeSelected}
+            updateLoadingStatus={loading => this.setState({ loading })}
+            colorSelector={this.state.colorSelector}
+            organelleFilter={this.state.organelleFilter}
+          />
+        </div>
 
-        {this.state.selectedOrganelle && (<Mitochondria
-          selectedOrganelle={this.state.selectedOrganelle}
-          onOrganelleSelected={this.handleOrganelleSelected}
-          onNodeSelected={this.handleNodeSelected}
-          data={this.state.data}
-        />
-        )}
+        <div
+          className={
+            this.isOrganelleShown("mitochondrion") ? "isActive" : "isNotActive"
+          }
+        >
+          <Mitochondria
+            selectedOrganelle={this.state.selectedOrganelle}
+            onOrganelleSelected={this.handleOrganelleSelected}
+            onNodeSelected={this.handleNodeSelected}
+            data={this.state.data}
+            toggleDisplay={this.toggleDisplay}
+          />
+        </div>
 
         {this.state.selectedNode && (
           <OrganelleDescription

@@ -19,12 +19,15 @@ export default class Mitochondria extends React.Component {
 
     for (let i = 0; i < numberOfNodes; i++) {
       let { x, y } = path.getPointAtLength((pathLength * i) / numberOfNodes);
-      const { id, description, organelle_location: location } = components[i];
+      const { id, name, description, originalLocation: location } = components[
+        i
+      ];
 
       let pos = {
         x,
         y,
         id,
+        name,
         description,
         location
       };
@@ -62,11 +65,11 @@ export default class Mitochondria extends React.Component {
       .on("mouseover", function(d, i) {
         let mouse = d3.mouse(this);
         let characterLength =
-          (d.id.length < 6
-            ? d.id.length + 2
-            : d.id.length > 12
-            ? d.id.length - 2
-            : d.id.length) * 12;
+          (d.name.length < 6
+            ? d.name.length + 2
+            : d.name.length > 12
+            ? d.name.length - 2
+            : d.name.length) * 12;
         svg
           .append("rect")
           .style("fill", "hsla(214, 89%, 14%, .7)")
@@ -92,7 +95,7 @@ export default class Mitochondria extends React.Component {
           .attr("dy", "-20")
           .attr("text-anchor", "middle")
           .attr("id", "node" + i)
-          .text(d.id);
+          .text(d.name);
       })
       .on("mouseout", function(d, i) {
         d3.selectAll("#node" + i).remove(); // Removes the on-hover information
@@ -100,32 +103,40 @@ export default class Mitochondria extends React.Component {
   }
 
   initMitochondria() {
-    let newPoints = [];
+    let newPoints = [];   // array of new locations within organelle
     let nodesInOrganelle = [];
     let linksInOrganelle = [];
 
     let svg = d3.select("svg#mitochondrion");
     let parts = [
-      "mitochondrial_outer_membrane",
-      "mitochondrial_intermembrane_space",
-      "mitochondrial_inner_membrane",
-      "mitochondrial_matrix"
+      "mitochondrial outer membrane",
+      "mitochondrial intermembrane space",
+      "mitochondrial inner membrane",
+      "mitochondrial matrix"
     ];
+
+    // TODO: Change this with a function that replaces Spaces with Underscores
+    let organelleMapping = {
+      "mitochondrial outer membrane": "mitochondrial_outer_membrane",
+      "mitochondrial intermembrane space": "mitochondrial_intermembrane_space",
+      "mitochondrial inner membrane": "mitochondrial_inner_membrane",
+      "mitochondrial matrix": "mitochondrial_matrix"
+    };
     let colors = ["#ACEDFF", "#615D6C", "#80CFA9", "#BE5A38"];
 
+    // Add the nodes
     parts.map((part, i) => {
       let components = this.props.data.nodes.filter(
-        node => node.organelle_location == part
+        node => node.originalLocation == part
       );
 
-      let path = d3.select(`#${part}`).node();
+      let path = d3.select(`#${organelleMapping[part]}`).node();
       let points = this.getPointsOnPath(path, components);
       this.placeNodes(svg, points, colors[i]);
       newPoints.push(...points);
       nodesInOrganelle.push(...components);
     });
 
-    console.log("this.props.data.links:", this.props.data.links);
     linksInOrganelle = this.props.data.links.filter(link => {
       let source = nodesInOrganelle.find(node => node.id == link.source.id);
       let target = nodesInOrganelle.find(node => node.id == link.target.id);
@@ -134,13 +145,8 @@ export default class Mitochondria extends React.Component {
         return source.location == target.location;
       }
     });
-    console.log("nodesInOrganelle:", nodesInOrganelle);
-    console.log("linksInOrganelle:", linksInOrganelle);
 
-    // this.simulation = d3
-    //   .forceSimulation(nodesInOrganelle)
-    //   .force("link", d3.forceLink(linksInOrganelle).id(d => d.id));
-
+    // Add the edges
     svg
       .append("g")
       .selectAll(".edge")
@@ -155,17 +161,8 @@ export default class Mitochondria extends React.Component {
       })
       .each(function(d) {
         console.log("new points:", newPoints);
-        const sourcePosition = newPoints.find(node => {
-          console.log("d.source.id:", d.source.id);
-          return node.id == d.source.id;
-        });
-        const targetPosition = newPoints.find(node => {
-          console.log("d.target.id:", d.target.id);
-          return node.id == d.target.id;
-        });
-
-        console.log("sourcePosition:", sourcePosition);
-        console.log("targetPosition:", targetPosition);
+        const sourcePosition = newPoints.find(node => node.id == d.source.id);
+        const targetPosition = newPoints.find(node => node.id == d.target.id);
 
         d3.select(this)
           .attr("x1", sourcePosition.x)
@@ -183,7 +180,7 @@ export default class Mitochondria extends React.Component {
         <button onClick={() => onOrganelleSelected(undefined)}>CLOSE</button>
         <svg
           id="mitochondrion"
-          width="600"
+          width="700"
           height="600"
           viewBox="0 0 778 796"
           fill="none"
@@ -210,19 +207,19 @@ export default class Mitochondria extends React.Component {
             stroke="#5555FF"
           />
           <path
-            id="mitochondrial_outer_membrane"
+            id="mitochondrial_inner_membrane"
             strokeWidth="0"
             d="M212 59C232.354 61.6734 273.812 79.6775 284 97.5C298.897 123.559 267.865 164.739 288 187C303.116 203.712 342.517 191.047 364.5 196C381.571 199.847 395.543 199.68 404 215C420.138 244.231 364 283 380 307.5C404 330 458.534 269.176 482 293C501.738 313.038 454.773 361.578 473 383C492.7 406.152 564.724 363.013 563 389.5C566.5 416 531.5 443.5 544 461C570.067 491.566 602.783 471.688 625 494C644.5 508.5 662.311 561.654 651.5 583C645.022 595.79 625 576 611.5 590.5C583.952 627.565 660.02 667.619 631.5 687C597 712.5 519.661 674.991 476 655.5C458.971 647.898 433.5 637.5 428.5 617.5C416 597 484 556.5 447 531C411 503 378.405 582.959 329.5 560.5C306.152 549.778 329 500.064 301 480.5C279.726 465.636 265.562 485.308 251 470.5C236.965 456.228 277.5 422.5 264 403C241.964 371.171 199.379 401.29 185.5 380C172.5 360.058 219.5 345.5 201.5 307.5C177.396 277.828 137.5 331.5 112.5 298C93.5 269.5 187 262.5 161 224C141 192.5 90.5 237 68.5 219.5C45.0347 200.834 124 181 118 149.5C109.058 131 79.0631 117.588 88.5 99C105 66.5 170.084 53.4948 212 59Z"
             stroke="#5555FF"
           />
           <path
-            id="mitochondrial_inner_membrane"
+            id="mitochondrial_intermembrane_space"
             strokeWidth="0"
             d="M166 37C223.5 33 285.943 62.2503 297 81C313.167 108.415 311.648 127.58 333.5 151C349.905 168.581 366.643 158.289 390.5 163.5C409.027 167.547 427.321 177.383 436.5 193.5C454.013 224.252 419.136 231.725 436.5 257.5C453 274 484.533 243.937 510 269C531.42 290.081 500.219 321.464 520 344C541.379 368.357 568 327.5 590.5 373C594.298 400.879 572.934 426.09 586.5 444.5C614.789 476.657 627.889 453.528 652 477C673.162 492.254 698.733 571.543 687 594C679.97 607.456 689.651 620.246 675 635.5C645.103 674.493 736.327 688.5 680.5 728.5C643.059 755.327 520.383 709.005 473 688.5C454.519 680.502 400.426 656.541 395 635.5C381.434 613.933 411.5 606 392 588C365 572 363.575 605.627 310.5 582C285.161 570.72 305.387 524.581 275 504C251.912 488.362 221.303 492.578 205.5 477C190.268 461.985 205.651 436.015 191 415.5C167.086 382.015 145.562 408.898 130.5 386.5C116.392 365.521 147.035 377.977 127.5 338C101.341 306.785 88.5 347 72.5 303.5C51.8801 273.517 109.5 278.5 94 250.5C70.5 234 46.2575 252.861 39 208C33.8645 176.255 76.5115 184.139 70 151C60.2957 131.538 48.2586 120.055 58.5 100.5C76.4068 66.3092 111 37 166 37Z"
             stroke="#5555FF"
           />
           <path
-            id="mitochondrial_intermembrane_space"
+            id="mitochondrial_outer_membrane"
             strokeWidth="0"
             d="M29.844 95.9883C58.2133 27.8663 106.014 16.3345 146.93 14.2353C325.3 5.08409 545.5 220.5 683 461C729.015 541.98 801.315 686.192 732.5 749C638.566 834.734 450.957 728.202 349.5 651.5C178.691 522.368 -52.511 293.744 29.844 95.9883Z"
             stroke="#5555FF"
