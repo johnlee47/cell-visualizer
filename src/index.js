@@ -29,6 +29,7 @@ import "./style.css";
 import { ColorSchemeSelector } from "./ColorSchemeSelector";
 import * as bg from "./bg.svg";
 import Mitochondria from "./Mitochondria";
+import EndoplasmicReticulum from "./EndoplasmicReticulum";
 import posed from "react-pose";
 
 const Box = posed.div({
@@ -181,6 +182,21 @@ export class App extends Component {
           }
         >
           <Mitochondria
+            selectedOrganelle={this.state.selectedOrganelle}
+            onOrganelleSelected={this.handleOrganelleSelected}
+            onNodeSelected={this.handleNodeSelected}
+            colorSelector={this.state.colorSelector}
+            data={this.state.data}
+            toggleDisplay={this.toggleDisplay}
+          />
+        </div>
+
+        <div
+          className={
+            this.isOrganelleShown("EndoplasmicReticulum") ? "isActive" : "isNotActive"
+          }
+        >
+          <EndoplasmicReticulum
             selectedOrganelle={this.state.selectedOrganelle}
             onOrganelleSelected={this.handleOrganelleSelected}
             onNodeSelected={this.handleNodeSelected}

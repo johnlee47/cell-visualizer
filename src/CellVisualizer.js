@@ -484,6 +484,7 @@ export default class CellVisualizer extends Component {
       );
     });
 
+
     d3.select("#mitochondrion").on(
       "click",
       function(d) {
@@ -492,8 +493,17 @@ export default class CellVisualizer extends Component {
       }.bind(this)
     );
 
+    d3.select("#endoplasmic_reticulum").on(
+      "click",
+      function(d) {
+        console.log("hi");
+        this.props.onOrganelleSelected("EndoplasmicReticulum");
+      }.bind(this)
+    );
+
     this.simulation.on("tick", this.onTick.bind(this));
   }
+  
 
   onTick() {
     // Calculate the node's new position after applying the constraints
