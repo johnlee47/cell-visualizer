@@ -44,7 +44,7 @@ export default class EndoplasmicReticulum extends React.Component {
       .enter()
       .append("circle")
       .attr("class", "node")
-      .attr("r", 5)
+      .attr("r", 3)
       .attr("cx", function(d) {
         return d.x;
       })
